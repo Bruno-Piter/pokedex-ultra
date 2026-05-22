@@ -1,0 +1,215 @@
+"use client";
+
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AbilitiesList } from "@/features/pokemon/components/abilities-list";
+import { ErrorState } from "@/features/pokemon/components/error-state";
+import { EvolutionTree } from "@/features/pokemon/components/evolution-tree";
+import { MovesTable } from "@/features/pokemon/components/moves-table";
+import { PokemonOverview } from "@/features/pokemon/components/pokemon-overview";
+import { PokemonGridSkeleton } from "@/features/pokemon/components/pokemon-skeleton";
+import { StatsBars } from "@/features/pokemon/components/stats-bars";
+import { StatsRangeTable } from "@/features/pokemon/components/stats-range-table";
+import { StatsRadar } from "@/features/pokemon/components/stats-radar";
+import { TypeBadge } from "@/features/pokemon/components/type-badge";
+import { usePokemonDetail } from "@/features/pokemon/hooks/use-pokemon-detail";
+import {
+  formatHeight,
+  formatPokemonId,
+  formatWeight,
+  getLocalizedName,
+} from "@/features/pokemon/utils/format";
+import { getOfficialArtwork } from "@/features/pokemon/utils/sprites";
+import { getTypeColor } from "@/features/pokemon/utils/format";
+
+type PokemonDetailViewProps = {
+  id: string;
+};
+
+export function PokemonDetailView({ id }: PokemonDetailViewProps) {
+  const { pokemon, species, evolution, isLoading, isError, refetch } =
+    usePokemonDetail(id);
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        <PokemonGridSkeleton count={1} />
+      </div>
+    );
+  }
+
+  if (isError || !pokemon || !species) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        <ErrorState
+          message="Não foi possível carregar este Pokémon."
+          onRetry={() => refetch()}
+        />
+      </div>
+    );
+  }
+
+  const namePt = getLocalizedName(species.names);
+  const displayName = namePt || pokemon.name.replace(/-/g, " ");
+  const primaryType = pokemon.types[0]?.type.name ?? "normal";
+  const color = getTypeColor(primaryType);
+  const artwork = getOfficialArtwork(pokemon);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 sm:py-8"
+    >
+      <Link
+        href="/"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Voltar à Pokédex
+      </Link>
+
+      <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
+        <motion.div
+          initial={{ x: -30, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          className="glass-card relative overflow-hidden rounded-2xl p-6"
+          style={{ boxShadow: `0 0 40px ${color}22` }}
+        >
+          <div
+            className="pointer-events-none absolute inset-0 opacity-20"
+            style={{
+              background: `radial-gradient(circle at 50% 30%, ${color}, transparent 70%)`,
+            }}
+          />
+
+          <div className="relative z-10 space-y-4">
+            <div>
+              <p className="font-mono text-sm text-muted-foreground">
+                {formatPokemonId(pokemon.id)}
+              </p>
+              <h1 className="font-heading text-2xl font-bold capitalize sm:text-3xl">
+                {displayName}
+              </h1>
+              {namePt && (
+                <p className="text-sm capitalize text-muted-foreground">
+                  {pokemon.name.replace(/-/g, " ")}
+                </p>
+              )}
+            </div>
+
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              className="relative mx-auto aspect-square w-full max-w-[240px]"
+            >
+              {artwork && (
+                <Image
+                  src={artwork}
+                  alt={displayName}
+                  fill
+                  sizes="240px"
+                  priority
+                  className="object-contain drop-shadow-2xl"
+                />
+              )}
+            </motion.div>
+
+            <div className="flex flex-wrap gap-2">
+              {pokemon.types.map(({ type }) => (
+                <TypeBadge key={type.name} type={type.name} />
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-center text-sm">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Altura</p>
+                <p className="font-semibold">{formatHeight(pokemon.height)}</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">Peso</p>
+                <p className="font-semibold">{formatWeight(pokemon.weight)}</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="glass-card rounded-2xl p-4 sm:p-6">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="mb-6 flex h-auto w-full flex-wrap gap-1 bg-muted/50 p-1">
+              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+              <TabsTrigger value="stats">Stats</TabsTrigger>
+              <TabsTrigger value="moves">Moves</TabsTrigger>
+              <TabsTrigger value="evolution">Evolução</TabsTrigger>
+              <TabsTrigger value="abilities">Habilidades</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="mt-0">
+              <motion.div
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <PokemonOverview pokemon={pokemon} species={species} />
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="stats" className="mt-0">
+              <motion.div
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+                className="grid gap-8 lg:grid-cols-2"
+              >
+                <StatsRadar stats={pokemon.stats} />
+                <StatsBars stats={pokemon.stats} />
+                <div className="lg:col-span-2">
+                  <StatsRangeTable stats={pokemon.stats} />
+                </div>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="moves" className="mt-0">
+              <motion.div
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <MovesTable moves={pokemon.moves} />
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="evolution" className="mt-0">
+              <motion.div
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {evolution ? (
+                  <EvolutionTree chain={evolution.chain} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Este Pokémon não possui evoluções.
+                  </p>
+                )}
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="abilities" className="mt-0">
+              <motion.div
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <AbilitiesList abilities={pokemon.abilities} />
+              </motion.div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
