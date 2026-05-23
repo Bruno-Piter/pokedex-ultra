@@ -15,11 +15,15 @@ export default function HomePage() {
     sort: "id",
     generation: null,
     statSort: [],
+    search: "",
   });
 
   return (
     <div className="min-h-screen bg-mesh">
-      <Header />
+      <Header
+        search={filters.search}
+        onSearchChange={(search) => setFilters((current) => ({ ...current, search }))}
+      />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <motion.div
           initial={{ opacity: 0, y: 12 }}

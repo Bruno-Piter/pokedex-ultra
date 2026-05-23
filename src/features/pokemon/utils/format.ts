@@ -91,6 +91,26 @@ export function formatPokemonId(id: number): string {
   return `#${String(id).padStart(3, "0")}`;
 }
 
+export function matchesPokemonSearch(pokemon: Pokemon, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+
+  const normalizedQuery = q.replace(/^#/, "").replace(/\s+/g, "-");
+  const name = pokemon.name.toLowerCase();
+  const displayName = name.replace(/-/g, " ");
+  const id = String(pokemon.id);
+  const padded = id.padStart(4, "0");
+
+  return (
+    name.includes(normalizedQuery) ||
+    displayName.includes(q) ||
+    id.startsWith(normalizedQuery) ||
+    padded.includes(normalizedQuery) ||
+    `#${padded}`.includes(q) ||
+    formatPokemonId(pokemon.id).toLowerCase().includes(q)
+  );
+}
+
 export function formatWeight(weight: number): string {
   return `${(weight / 10).toFixed(1)} kg`;
 }
