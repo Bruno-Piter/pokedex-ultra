@@ -106,40 +106,66 @@ export function getPokemonStatValue(
   return pokemon.stats.find((s) => s.stat.name === stat)?.base_stat ?? 0;
 }
 
+export function getPokemonStatAverage(
+  pokemon: Pokemon,
+  stats: StatFilterStat[],
+): number {
+  if (stats.length === 0) return 0;
+  const total = stats.reduce(
+    (sum, stat) => sum + getPokemonStatValue(pokemon, stat),
+    0,
+  );
+  return total / stats.length;
+}
+
+function comparePokemon(
+  a: Pokemon,
+  b: Pokemon,
+  sort: PokemonSortOption,
+): number {
+  switch (sort) {
+    case "name":
+      return a.name.localeCompare(b.name);
+    case "weight":
+      return b.weight - a.weight;
+    case "height":
+      return b.height - a.height;
+    case "hp":
+    case "attack":
+    case "defense":
+    case "special-attack":
+    case "special-defense":
+    case "speed":
+    case "bst":
+      return getPokemonStatValue(b, sort) - getPokemonStatValue(a, sort);
+    default:
+      return a.id - b.id;
+  }
+}
+
 export function sortPokemon(
   pokemon: Pokemon[],
   sort: PokemonSortOption,
 ): Pokemon[] {
-  return [...pokemon].sort((a, b) => {
-    switch (sort) {
-      case "name":
-        return a.name.localeCompare(b.name);
-      case "weight":
-        return b.weight - a.weight;
-      case "height":
-        return b.height - a.height;
-      case "hp":
-      case "attack":
-      case "defense":
-      case "special-attack":
-      case "special-defense":
-      case "speed":
-      case "bst":
-        return getPokemonStatValue(b, sort) - getPokemonStatValue(a, sort);
-      default:
-        return a.id - b.id;
-    }
-  });
+  return [...pokemon].sort((a, b) => comparePokemon(a, b, sort));
 }
 
-export function filterByMinStat(
+export function sortPokemonByStatPriority(
   pokemon: Pokemon[],
-  filter: { stat: StatFilterStat; min: number } | null,
+  statPriority: StatFilterStat[],
+  fallbackSort: PokemonSortOption,
 ): Pokemon[] {
-  if (!filter || filter.min <= 0) return pokemon;
-  return pokemon.filter(
-    (p) => getPokemonStatValue(p, filter.stat) >= filter.min,
-  );
+  if (statPriority.length === 0) {
+    return sortPokemon(pokemon, fallbackSort);
+  }
+
+  return [...pokemon].sort((a, b) => {
+    const diff =
+      getPokemonStatAverage(b, statPriority) -
+      getPokemonStatAverage(a, statPriority);
+    if (diff !== 0) return diff;
+    return comparePokemon(a, b, fallbackSort);
+  });
 }
 
 export const GENERATION_RANGES = [

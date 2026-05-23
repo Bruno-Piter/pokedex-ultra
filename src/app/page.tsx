@@ -5,13 +5,16 @@ import { motion } from "framer-motion";
 import { Header } from "@/components/layout/header";
 import { Sidebar, type FilterState } from "@/components/layout/sidebar";
 import { PokemonGrid } from "@/features/pokemon/components/pokemon-grid";
+import { usePokemonCatalog } from "@/features/pokemon/hooks/use-pokemon-catalog";
 
 export default function HomePage() {
+  usePokemonCatalog();
+
   const [filters, setFilters] = useState<FilterState>({
     type: null,
     sort: "id",
     generation: null,
-    statMin: null,
+    statSort: [],
   });
 
   return (

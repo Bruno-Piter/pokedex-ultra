@@ -157,6 +157,20 @@ export async function getAllPokemonNames(): Promise<NamedResource[]> {
   return all.results;
 }
 
+export async function fetchAllPokemon(): Promise<Pokemon[]> {
+  const names = await getAllPokemonNames();
+  const ids = names.map((entry) => extractIdFromUrl(entry.url));
+  const map = await fetchInBatches(
+    ids.map(String),
+    (id) => getPokemonByIdOrName(id),
+    BATCH_CONCURRENCY,
+  );
+
+  return ids
+    .map((id) => map.get(String(id)))
+    .filter((pokemon): pokemon is Pokemon => pokemon !== undefined);
+}
+
 export async function fetchPokemonBatch(urls: string[]): Promise<Pokemon[]> {
   return Promise.all(
     urls.map(async (url) => {

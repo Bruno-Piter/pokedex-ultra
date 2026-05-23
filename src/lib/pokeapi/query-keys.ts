@@ -12,6 +12,7 @@ export const pokeKeys = {
       [...pokeKeys.pokemon.all(), "species", id] as const,
     search: (query: string) =>
       [...pokeKeys.pokemon.all(), "search", query] as const,
+    catalog: () => [...pokeKeys.pokemon.all(), "catalog"] as const,
   },
   type: {
     detail: (name: string) => [...pokeKeys.all, "type", name] as const,
@@ -43,5 +44,5 @@ export type PokemonListFilters = {
   type?: string;
   sort: PokemonSortOption;
   search?: string;
-  statMin?: { stat: StatFilterStat; min: number } | null;
+  statSort?: StatFilterStat[];
 };
