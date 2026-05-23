@@ -177,10 +177,17 @@ export type TypePokemon = {
   slot: number;
 };
 
+export type TypeDamageRelations = {
+  double_damage_from: NamedResource[];
+  half_damage_from: NamedResource[];
+  no_damage_from: NamedResource[];
+};
+
 export type TypeData = {
   id: number;
   name: string;
   pokemon: TypePokemon[];
+  damage_relations: TypeDamageRelations;
 };
 
 export type AbilityData = {

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { TypeDefenses } from "@/features/pokemon/components/type-defenses";
 import type { Pokemon, PokemonSpecies } from "@/features/pokemon/types";
 import {
   formatGenderRate,
@@ -49,6 +50,8 @@ export function PokemonOverview({ pokemon, species }: PokemonOverviewProps) {
         <Badge variant="outline">Weight: {formatWeight(pokemon.weight)}</Badge>
         <Badge variant="outline">Height: {formatHeight(pokemon.height)}</Badge>
       </div>
+
+      <TypeDefenses types={pokemon.types} pokemonName={pokemon.name} />
     </motion.div>
   );
 }
