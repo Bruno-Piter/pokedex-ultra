@@ -13,6 +13,7 @@ import type { FilterState } from "@/components/layout/sidebar";
 import type { Pokemon } from "@/features/pokemon/types";
 import {
   filterByGeneration,
+  matchesPokemonSearch,
   sortPokemonByStatPriority,
 } from "@/features/pokemon/utils/format";
 
@@ -22,6 +23,12 @@ type PokemonGridProps = {
 
 function filterAndSortCatalog(catalog: Pokemon[], filters: FilterState): Pokemon[] {
   let result = catalog;
+
+  if (filters.search.trim()) {
+    result = result.filter((pokemon) =>
+      matchesPokemonSearch(pokemon, filters.search),
+    );
+  }
 
   if (filters.type) {
     result = result.filter((pokemon) =>
@@ -48,7 +55,7 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [filters.type, filters.generation, filters.statSort, filters.sort]);
+  }, [filters.type, filters.generation, filters.statSort, filters.sort, filters.search]);
 
   useEffect(() => {
     const el = loadMoreRef.current;
@@ -89,9 +96,11 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
         animate={{ opacity: 1 }}
         className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed p-16 text-center"
       >
-        <p className="font-semibold">No Pokémon found</p>
+        <p className="font-semibold">Nenhum Pokémon encontrado</p>
         <p className="text-sm text-muted-foreground">
-          Try adjusting the selected filters.
+          {filters.search.trim()
+            ? `Nenhum resultado para "${filters.search.trim()}".`
+            : "Tente ajustar os filtros selecionados."}
         </p>
       </motion.div>
     );
@@ -99,6 +108,11 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
 
   return (
     <div className="space-y-6">
+      {filters.search.trim() ? (
+        <p className="text-sm text-muted-foreground">
+          {sortedCatalog.length} resultado{sortedCatalog.length === 1 ? "" : "s"} para &quot;{filters.search.trim()}&quot;
+        </p>
+      ) : null}
       <motion.div
         initial="hidden"
         animate="visible"

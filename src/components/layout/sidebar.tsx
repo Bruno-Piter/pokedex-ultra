@@ -25,6 +25,7 @@ export type FilterState = {
   sort: PokemonSortOption;
   generation: number | null;
   statSort: StatFilterStat[];
+  search: string;
 };
 
 type SidebarProps = {
@@ -51,7 +52,13 @@ const STAT_SORT_OPTIONS: { value: StatFilterStat; label: string }[] = [
 
 export function Sidebar({ filters, onChange }: SidebarProps) {
   const reset = () =>
-    onChange({ type: null, sort: "id", generation: null, statSort: [] });
+    onChange({
+      type: null,
+      sort: "id",
+      generation: null,
+      statSort: [],
+      search: "",
+    });
 
   const toggleStatSort = (stat: StatFilterStat) => {
     const next = filters.statSort.includes(stat)
