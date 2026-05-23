@@ -111,3 +111,22 @@ export function getBaseStatMap(stats: PokemonStat[]): Record<StatName, number> {
 export function getBaseStatTotal(stats: PokemonStat[]): number {
   return stats.reduce((sum, s) => sum + s.base_stat, 0);
 }
+
+export function calcTotalStatRange(
+  baseMap: Record<StatName, number>,
+  level: number,
+  natureModifier: NatureModifier,
+): StatRange {
+  return STAT_ORDER.reduce(
+    (total, stat) => {
+      const range = calcStatRange(
+        baseMap[stat] ?? 0,
+        level,
+        natureModifier,
+        stat === "hp",
+      );
+      return { min: total.min + range.min, max: total.max + range.max };
+    },
+    { min: 0, max: 0 },
+  );
+}
