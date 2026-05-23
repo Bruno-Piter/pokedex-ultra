@@ -7,22 +7,26 @@ import { TypeBadge } from "@/features/pokemon/components/type-badge";
 import { TypeCardGlow } from "@/features/pokemon/components/type-card-glow";
 import { POKEMON_LIST_ROW_CLASS } from "@/features/pokemon/components/pokemon-list-row-layout";
 import { PokemonSpriteImage } from "@/features/pokemon/components/pokemon-sprite-image";
-import type { Pokemon } from "@/features/pokemon/types";
+import type { Pokemon, StatFilterStat } from "@/features/pokemon/types";
 import {
   formatPokemonId,
+  getPokemonStatValue,
   getPokemonTypeColors,
 } from "@/features/pokemon/utils/format";
 import {
   getBaseStatMap,
-  STAT_ORDER,
+  isStatColumnHighlighted,
+  LIST_STAT_COLUMNS,
 } from "@/features/pokemon/utils/stats-calculator";
+import { cn } from "@/lib/utils";
 
 type PokemonCardProps = {
   pokemon: Pokemon;
   index?: number;
+  statSort?: StatFilterStat[];
 };
 
-export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
+export function PokemonCard({ pokemon, index = 0, statSort = [] }: PokemonCardProps) {
   const [primaryColor, secondaryColor] = getPokemonTypeColors(pokemon.types);
   const statMap = getBaseStatMap(pokemon.stats);
   const abilities = [...pokemon.abilities].sort((a, b) => a.slot - b.slot);
@@ -84,12 +88,18 @@ export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
                 ))}
               </div>
 
-              {STAT_ORDER.map((stat) => (
+              {LIST_STAT_COLUMNS.map((stat) => (
                 <p
                   key={stat}
-                  className="text-center font-mono text-sm tabular-nums"
+                  className={cn(
+                    "text-center font-mono text-sm tabular-nums",
+                    isStatColumnHighlighted(stat, statSort) &&
+                      "font-semibold text-destructive",
+                  )}
                 >
-                  {statMap[stat] ?? "—"}
+                  {stat === "bst"
+                    ? getPokemonStatValue(pokemon, "bst")
+                    : (statMap[stat] ?? "—")}
                 </p>
               ))}
             </div>

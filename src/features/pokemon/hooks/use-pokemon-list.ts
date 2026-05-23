@@ -23,7 +23,11 @@ export function usePokemonList(
     enabled: options?.enabled ?? true,
     queryFn: async ({ pageParam = 0 }) => {
       const applyFilters = (batch: Pokemon[]) => {
-        let pokemon = sortPokemon(batch, filters.sort);
+        let pokemon = sortPokemon(
+          batch,
+          filters.sort,
+          filters.sortDirection ?? "asc",
+        );
         pokemon = filterByGeneration(pokemon, filters.generation ?? null);
         return pokemon;
       };

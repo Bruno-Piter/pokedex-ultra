@@ -1,6 +1,7 @@
 import type {
   NatureModifier,
   PokemonStat,
+  StatFilterStat,
   StatName,
   StatRange,
 } from "@/features/pokemon/types";
@@ -31,6 +32,20 @@ export const STAT_SHORT_LABELS: Record<StatName, string> = {
   "special-defense": "SpD",
   speed: "Spe",
 };
+
+export const LIST_STAT_COLUMNS: (StatName | "bst")[] = [...STAT_ORDER, "bst"];
+
+export const LIST_STAT_LABELS: Record<StatName | "bst", string> = {
+  ...STAT_SHORT_LABELS,
+  bst: "BST",
+};
+
+export function isStatColumnHighlighted(
+  stat: StatName | "bst",
+  statSort: StatFilterStat[],
+): boolean {
+  return statSort.includes(stat);
+}
 
 export const STAT_COLORS: Record<StatName, string> = {
   hp: "#FF5959",

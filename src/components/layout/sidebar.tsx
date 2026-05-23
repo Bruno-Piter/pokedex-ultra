@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Filter, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowUp, Filter, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,7 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import type { PokemonSortOption, StatFilterStat } from "@/features/pokemon/types";
+import type {
+  PokemonSortOption,
+  SortDirection,
+  StatFilterStat,
+} from "@/features/pokemon/types";
 import { STAT_LABELS } from "@/features/pokemon/utils/stats-calculator";
 import {
   GENERATION_RANGES,
@@ -20,9 +24,12 @@ import {
 } from "@/features/pokemon/utils/format";
 import { cn } from "@/lib/utils";
 
+export type { SortDirection };
+
 export type FilterState = {
   type: string | null;
   sort: PokemonSortOption;
+  sortDirection: SortDirection;
   generation: number | null;
   statSort: StatFilterStat[];
   search: string;
@@ -55,6 +62,7 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
     onChange({
       type: null,
       sort: "id",
+      sortDirection: "asc",
       generation: null,
       statSort: [],
       search: "",
@@ -91,24 +99,57 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
           <label className="text-xs font-medium text-muted-foreground">
             Sort by
           </label>
-          <Select
-            value={filters.sort}
-            onValueChange={(v) => {
-              if (!v) return;
-              onChange({ ...filters, sort: v as PokemonSortOption });
-            }}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <div className="min-w-0 flex-1">
+              <Select
+                value={filters.sort}
+                onValueChange={(v) => {
+                  if (!v) return;
+                  onChange({ ...filters, sort: v as PokemonSortOption });
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              aria-label={
+                filters.sortDirection === "asc"
+                  ? "Ordenar do menor para o maior"
+                  : "Ordenar do maior para o menor"
+              }
+              title={
+                filters.sortDirection === "asc"
+                  ? "Menor → maior"
+                  : "Maior → menor"
+              }
+              onClick={() =>
+                onChange({
+                  ...filters,
+                  sortDirection:
+                    filters.sortDirection === "asc" ? "desc" : "asc",
+                })
+              }
+            >
+              {filters.sortDirection === "asc" ? (
+                <ArrowUp className="size-4" />
+              ) : (
+                <ArrowDown className="size-4" />
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">
