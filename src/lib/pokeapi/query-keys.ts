@@ -49,6 +49,7 @@ export type PokemonListFilters = {
   types?: string[];
   sort: PokemonSortOption;
   sortDirection?: SortDirection;
+  statSortDirection?: SortDirection;
   search?: string;
   statSort?: StatFilterStat[];
 };

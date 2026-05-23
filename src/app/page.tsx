@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Header } from "@/components/layout/header";
 import { Sidebar, type FilterState } from "@/components/layout/sidebar";
 import { PokemonGrid } from "@/features/pokemon/components/pokemon-grid";
@@ -14,6 +13,7 @@ export default function HomePage() {
     types: [],
     sort: "id",
     sortDirection: "asc",
+    statSortDirection: "asc",
     generation: null,
     statSort: [],
     search: "",
@@ -25,21 +25,8 @@ export default function HomePage() {
         search={filters.search}
         onSearchChange={(search) => setFilters((current) => ({ ...current, search }))}
       />
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
-            Explore every Pokémon
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Browse, filter, and discover full details for each creature.
-          </p>
-        </motion.div>
-
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+      <main className="mx-auto max-w-7xl px-4 pt-3 pb-6 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <Sidebar filters={filters} onChange={setFilters} />
           <div className="min-w-0 flex-1">
             <PokemonGrid filters={filters} />

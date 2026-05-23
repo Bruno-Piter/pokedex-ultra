@@ -29,7 +29,7 @@ export function FilterSection({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.3 }}
-      className={cn("space-y-2", className)}
+      className={cn("space-y-1.5", className)}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -55,7 +55,7 @@ export function FilterSection({
       {hint ? (
         <p className="text-[11px] leading-snug text-muted-foreground">{hint}</p>
       ) : null}
-      <div className="rounded-xl border border-border/40 bg-muted/15 p-3">
+      <div className="rounded-xl border border-border/40 bg-muted/15 p-2.5">
         {children}
       </div>
     </motion.section>
