@@ -54,6 +54,16 @@ export function getTypeColor(type: string): string {
   return TYPE_COLORS[type as PokemonTypeName] ?? "#888888";
 }
 
+export function getPokemonTypeColors(
+  types: { type: { name: string } }[],
+): [string, string] {
+  const primary = getTypeColor(types[0]?.type.name ?? "normal");
+  const secondary = getTypeColor(
+    types[1]?.type.name ?? types[0]?.type.name ?? "normal",
+  );
+  return [primary, secondary];
+}
+
 export function getLocalizedName(
   names: LocalizedName[],
   preferred = "en",

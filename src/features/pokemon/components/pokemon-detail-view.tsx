@@ -15,15 +15,16 @@ import { StatsBars } from "@/features/pokemon/components/stats-bars";
 import { StatsRangeTable } from "@/features/pokemon/components/stats-range-table";
 import { StatsRadar } from "@/features/pokemon/components/stats-radar";
 import { TypeBadge } from "@/features/pokemon/components/type-badge";
+import { TypeCardGlow } from "@/features/pokemon/components/type-card-glow";
 import { usePokemonDetail } from "@/features/pokemon/hooks/use-pokemon-detail";
 import {
   formatHeight,
   formatPokemonId,
   formatWeight,
   getLocalizedName,
+  getPokemonTypeColors,
 } from "@/features/pokemon/utils/format";
 import { getOfficialArtwork } from "@/features/pokemon/utils/sprites";
-import { getTypeColor } from "@/features/pokemon/utils/format";
 
 type PokemonDetailViewProps = {
   id: string;
@@ -54,8 +55,7 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
 
   const displayName =
     getLocalizedName(species.names) || pokemon.name.replace(/-/g, " ");
-  const primaryType = pokemon.types[0]?.type.name ?? "normal";
-  const color = getTypeColor(primaryType);
+  const [primaryColor, secondaryColor] = getPokemonTypeColors(pokemon.types);
   const artwork = getOfficialArtwork(pokemon);
 
   return (
@@ -76,14 +76,14 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
         <motion.div
           initial={{ x: -30, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          className="glass-card relative overflow-hidden rounded-2xl p-6"
-          style={{ boxShadow: `0 0 40px ${color}22` }}
+          className="group glass-card relative overflow-hidden rounded-2xl bg-card/60 p-6 backdrop-blur-sm"
+          style={{
+            boxShadow: `0 0 0 1px ${primaryColor}44, 0 8px 40px ${primaryColor}33, 0 8px 40px ${secondaryColor}33`,
+          }}
         >
-          <div
-            className="pointer-events-none absolute inset-0 opacity-20"
-            style={{
-              background: `radial-gradient(circle at 50% 30%, ${color}, transparent 70%)`,
-            }}
+          <TypeCardGlow
+            colors={[primaryColor, secondaryColor]}
+            size="lg"
           />
 
           <div className="relative z-10 space-y-4">

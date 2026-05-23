@@ -5,8 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { TypeBadge } from "@/features/pokemon/components/type-badge";
+import { TypeCardGlow } from "@/features/pokemon/components/type-card-glow";
 import type { Pokemon } from "@/features/pokemon/types";
-import { formatPokemonId, getTypeColor } from "@/features/pokemon/utils/format";
+import {
+  formatPokemonId,
+  getPokemonTypeColors,
+} from "@/features/pokemon/utils/format";
 import { getOfficialArtwork } from "@/features/pokemon/utils/sprites";
 
 type PokemonCardProps = {
@@ -15,8 +19,7 @@ type PokemonCardProps = {
 };
 
 export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
-  const primaryType = pokemon.types[0]?.type.name ?? "normal";
-  const color = getTypeColor(primaryType);
+  const [primaryColor, secondaryColor] = getPokemonTypeColors(pokemon.types);
   const artwork = getOfficialArtwork(pokemon);
 
   return (
@@ -31,13 +34,10 @@ export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
         <Card
           className="group relative h-full overflow-hidden border-border/50 bg-card/60 p-4 backdrop-blur-sm transition-shadow hover:shadow-xl"
           style={{
-            boxShadow: `0 0 0 1px ${color}22`,
+            boxShadow: `0 0 0 1px ${primaryColor}44, 0 8px 32px ${primaryColor}33, 0 8px 32px ${secondaryColor}33`,
           }}
         >
-          <div
-            className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40"
-            style={{ backgroundColor: color }}
-          />
+          <TypeCardGlow colors={[primaryColor, secondaryColor]} />
 
           <div className="relative z-10 flex flex-col gap-3">
             <div className="flex items-start justify-between">
