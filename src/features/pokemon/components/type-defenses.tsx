@@ -49,6 +49,10 @@ export function TypeDefenses({ types, pokemonName }: TypeDefensesProps) {
   }
 
   const defenses = getTypeDefenses(defendingTypes, chart);
+  const defenseRows = [
+    defenses.slice(0, 9),
+    defenses.slice(9, 18),
+  ].filter((row) => row.length > 0);
 
   return (
     <section className="space-y-3">
@@ -60,26 +64,39 @@ export function TypeDefenses({ types, pokemonName }: TypeDefensesProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-9 gap-1 sm:gap-1.5">
-        {defenses.map(({ type, multiplier, label }) => (
-          <div key={type} className="flex flex-col gap-0.5">
+      <div className="overflow-x-auto rounded-xl border border-border/50 bg-muted/10 p-3 sm:overflow-visible sm:p-4">
+        <div className="min-w-[320px] space-y-4">
+          {defenseRows.map((row, rowIndex) => (
             <div
-              className="flex h-8 items-center justify-center rounded-sm text-[10px] font-bold tracking-wide text-white sm:h-9 sm:text-[11px]"
-              style={{ backgroundColor: getTypeColor(type) }}
-              title={type}
-            >
-              {TYPE_ABBREVIATIONS[type]}
-            </div>
-            <div
+              key={rowIndex}
               className={cn(
-                "flex h-8 items-center justify-center rounded-sm text-sm font-bold sm:h-9",
-                multiplierTone(multiplier),
+                rowIndex > 0 && "border-t border-border/50 pt-4",
               )}
             >
-              {label ?? ""}
+              <div className="grid grid-cols-9 gap-1.5 sm:gap-2">
+                {row.map(({ type, multiplier, label }) => (
+                  <div key={type} className="flex flex-col gap-1">
+                    <div
+                      className="flex h-8 items-center justify-center rounded-sm text-[10px] font-bold tracking-wide text-white sm:h-9 sm:text-[11px]"
+                      style={{ backgroundColor: getTypeColor(type) }}
+                      title={type}
+                    >
+                      {TYPE_ABBREVIATIONS[type]}
+                    </div>
+                    <div
+                      className={cn(
+                        "flex h-8 items-center justify-center rounded-sm text-sm font-bold sm:h-9",
+                        multiplierTone(multiplier),
+                      )}
+                    >
+                      {label ?? ""}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { TypeBadge } from "@/features/pokemon/components/type-badge";
 import { TypeCardGlow } from "@/features/pokemon/components/type-card-glow";
 import { POKEMON_LIST_ROW_CLASS } from "@/features/pokemon/components/pokemon-list-row-layout";
+import { AbilityTooltip } from "@/features/pokemon/components/ability-tooltip";
 import { PokemonSpriteImage } from "@/features/pokemon/components/pokemon-sprite-image";
 import type { Pokemon, StatFilterStat } from "@/features/pokemon/types";
 import {
@@ -76,15 +77,11 @@ export function PokemonCard({ pokemon, index = 0, statSort = [] }: PokemonCardPr
 
               <div className="min-w-0 space-y-0.5 text-sm">
                 {abilities.map((entry) => (
-                  <p
+                  <AbilityTooltip
                     key={entry.ability.name}
-                    className="truncate capitalize text-foreground/90"
-                  >
-                    {entry.ability.name.replace(/-/g, " ")}
-                    {entry.is_hidden ? (
-                      <span className="text-muted-foreground"> (H)</span>
-                    ) : null}
-                  </p>
+                    entry={entry}
+                    className="text-foreground/90"
+                  />
                 ))}
               </div>
 

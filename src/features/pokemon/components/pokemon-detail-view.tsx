@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AbilitiesList } from "@/features/pokemon/components/abilities-list";
 import { ErrorState } from "@/features/pokemon/components/error-state";
+import { AbilityTooltip } from "@/features/pokemon/components/ability-tooltip";
 import { EvolutionTree } from "@/features/pokemon/components/evolution-tree";
 import { MovesTable } from "@/features/pokemon/components/moves-table";
 import { PokemonOverview } from "@/features/pokemon/components/pokemon-overview";
@@ -35,7 +35,7 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <PokemonGridSkeleton count={1} />
       </div>
     );
@@ -43,7 +43,7 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
 
   if (isError || !pokemon || !species) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <ErrorState
           message="Could not load this Pokémon."
           onRetry={() => refetch()}
@@ -60,7 +60,7 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 sm:py-8"
+      className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8"
     >
       <Link
         href="/"
@@ -70,7 +70,7 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
         Back to Pokédex
       </Link>
 
-      <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(260px,280px)_minmax(0,1fr)] lg:gap-8">
         <motion.div
           initial={{ x: -30, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -130,17 +130,31 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
                 <p className="font-semibold">{formatWeight(pokemon.weight)}</p>
               </div>
             </div>
+
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Abilities</p>
+              <div className="space-y-1 rounded-lg bg-muted/50 p-3">
+                {[...pokemon.abilities]
+                  .sort((a, b) => a.slot - b.slot)
+                  .map((entry) => (
+                    <AbilityTooltip
+                      key={entry.ability.name}
+                      entry={entry}
+                      className="text-sm text-foreground/90"
+                    />
+                  ))}
+              </div>
+            </div>
           </div>
         </motion.div>
 
-        <div className="glass-card rounded-2xl p-4 sm:p-6">
-          <Tabs defaultValue="overview" className="w-full">
+        <div className="glass-card min-w-0 rounded-2xl p-4 sm:p-6">
+          <Tabs defaultValue="overview" className="min-w-0 w-full">
             <TabsList className="mb-6 flex h-auto w-full flex-wrap gap-1 bg-muted/50 p-1">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="stats">Stats</TabsTrigger>
               <TabsTrigger value="moves">Moves</TabsTrigger>
               <TabsTrigger value="evolution">Evolution</TabsTrigger>
-              <TabsTrigger value="abilities">Abilities</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-0">
@@ -153,16 +167,16 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
               </motion.div>
             </TabsContent>
 
-            <TabsContent value="stats" className="mt-0">
+            <TabsContent value="stats" className="mt-0 min-w-0">
               <motion.div
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.2 }}
-                className="grid gap-8 lg:grid-cols-2"
+                className="grid min-w-0 gap-8 xl:grid-cols-2"
               >
                 <StatsRadar stats={pokemon.stats} />
                 <StatsBars stats={pokemon.stats} />
-                <div className="lg:col-span-2">
+                <div className="min-w-0 xl:col-span-2">
                   <StatsRangeTable stats={pokemon.stats} />
                 </div>
               </motion.div>
@@ -194,16 +208,6 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
                     This Pokémon does not evolve.
                   </p>
                 )}
-              </motion.div>
-            </TabsContent>
-
-            <TabsContent value="abilities" className="mt-0">
-              <motion.div
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AbilitiesList abilities={pokemon.abilities} />
               </motion.div>
             </TabsContent>
           </Tabs>
