@@ -1,71 +1,66 @@
 # Pokédex Ultra
 
-Uma Pokédex moderna e interativa, feita depois de poucos anos de prática de programação — um projeto para explorar dados reais da [PokéAPI](https://pokeapi.co/), experimentar uma stack atual de front-end e consolidar o que aprendi ao longo do caminho.
+Pokédex web focada em **profundidade de dados** e **ferramentas de análise** — além de listar Pokémon, ela ajuda a comparar stats, filtrar o catálogo inteiro e entender matchups, evoluções e movesets com clareza.
 
-## Sobre o projeto
+Dados via [PokéAPI](https://pokeapi.co/).
 
-O **Pokédex Ultra** permite navegar por centenas de Pokémon, filtrar por tipo, geração e ordenação, buscar rapidamente pelo nome e abrir páginas de detalhe com informações completas: stats, moves, habilidades, evolução e muito mais.
+## Por que é mais completa
 
-Interface em português, tema claro/escuro e animações sutis para deixar a experiência mais fluida.
+A maioria das Pokédex para por nome, sprite e tipos. Aqui o catálogo funciona como uma **ferramenta de consulta**:
 
-## Funcionalidades
+| Área | O que entrega |
+|---|---|
+| **Catálogo** | ~1.350 Pokémon em lista horizontal com stats base, BST (Base Stats Total), tipos e habilidades visíveis na mesma linha |
+| **Filtros** | Tipo (até 2), geração, ordenação global e por stats (múltiplos, com média), cada uma com direção própria |
+| **Busca** | Filtro em tempo real no header (`Ctrl+K`) sobre todo o catálogo |
+| **Detalhe** | Overview, stats, moves, evolução e defesas por tipo — sem abas redundantes |
+| **Stats** | Radar, barras, faixas min/máx por nível (50–200) e naturezas (estilo Serebii), com total por linha |
+| **Type defenses** | Grid de efetividade contra os 18 tipos |
+| **Moves** | Agrupados (Level Up, TM, Egg, Tutor) com tipo, categoria, power, acc e PP |
+| **Evolução** | Cadeia estendida com ramificações e formas especiais |
+| **Sprites** | Arte oficial ou pixel art, com toggle global |
 
-- **Listagem completa** — grid responsivo com paginação e filtros (tipo, geração, ordenação)
-- **Busca rápida** — command menu (`Ctrl+K` / `Cmd+K`) para ir direto a qualquer Pokémon
-- **Página de detalhe** — artwork oficial, tipos, medidas, descrição e árvore de evolução
-- **Stats** — gráfico radar, barras de base stats e tabela min/máx por nível (50, 100, 150, 200), inspirada em referências como Serebii
-- **Moves** — agrupados por Level Up, TM/HM, Egg e Tutor, com tipo, poder, precisão e PP
-- **Tema** — alternância entre modo claro e escuro
+## Funcionalidades em destaque
+
+- Catálogo completo pré-carregado — filtros e ordenação aplicados em **todos** os Pokémon, não só na página atual
+- Habilidades com descrição no hover, direto na lista
+- Cards com glow animado baseado nos tipos do Pokémon
+- Sidebar de filtros fixa, organizada por seções
+- Tema claro/escuro
 
 ## Stack
 
-| Tecnologia | Uso |
-|---|---|
-| [Next.js 16](https://nextjs.org/) | App Router, SSR/CSR |
-| [React 19](https://react.dev/) | UI |
-| [TypeScript](https://www.typescriptlang.org/) | Tipagem |
-| [TanStack Query](https://tanstack.com/query) | Cache e fetching da API |
-| [Tailwind CSS 4](https://tailwindcss.com/) | Estilização |
-| [shadcn/ui](https://ui.shadcn.com/) + Base UI | Componentes |
-| [Framer Motion](https://www.framer.com/motion/) | Animações |
-| [Recharts](https://recharts.org/) | Gráfico de stats |
-| [PokéAPI](https://pokeapi.co/) | Dados dos Pokémon |
+Next.js 16 · React 19 · TypeScript · TanStack Query · Tailwind CSS 4 · shadcn/ui · Framer Motion · Recharts · PokéAPI
 
 ## Como rodar
 
-Pré-requisitos: **Node.js 20+** e **npm**.
+Requisitos: **Node.js 20+** e **npm**.
 
 ```bash
-# Clonar o repositório
 git clone https://github.com/Bruno-Piter/pokedex-ultra.git
 cd pokedex-ultra
-
-# Instalar dependências
 npm install
-
-# Subir o servidor de desenvolvimento
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000) no navegador.
-
-### Outros comandos
+Abra [http://localhost:3000](http://localhost:3000).
 
 ```bash
-npm run build   # Build de produção
-npm run start   # Servir build de produção
+npm run build   # produção
+npm run start   # servir build
 npm run lint    # ESLint
+npm run icons   # regenerar favicon a partir de scripts/source-icon.png
 ```
 
-## Estrutura do projeto
+## Estrutura
 
 ```
 src/
-├── app/                    # Rotas (App Router)
-├── components/             # Layout e UI compartilhados
-├── features/pokemon/       # Domínio Pokémon (API, hooks, componentes)
-├── lib/pokeapi/            # Cliente HTTP e endpoints
-└── providers/              # Theme e React Query
+├── app/                 # rotas (App Router)
+├── components/layout/   # header, sidebar, busca
+├── features/pokemon/    # API, hooks, componentes e utils
+├── lib/pokeapi/         # cliente HTTP
+└── providers/           # tema, cache, artwork
 ```
 
 ## Autor
@@ -74,4 +69,4 @@ src/
 
 ---
 
-Dados fornecidos pela [PokéAPI](https://pokeapi.co/). Pokémon e nomes relacionados são marcas registradas da Nintendo, Game Freak e The Pokémon Company.
+Pokémon © Nintendo / Game Freak / The Pokémon Company. Dados via [PokéAPI](https://pokeapi.co/).
