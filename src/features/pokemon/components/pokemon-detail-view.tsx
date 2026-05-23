@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +10,7 @@ import { EvolutionTree } from "@/features/pokemon/components/evolution-tree";
 import { MovesTable } from "@/features/pokemon/components/moves-table";
 import { PokemonOverview } from "@/features/pokemon/components/pokemon-overview";
 import { PokemonGridSkeleton } from "@/features/pokemon/components/pokemon-skeleton";
+import { PokemonSpriteImage } from "@/features/pokemon/components/pokemon-sprite-image";
 import { StatsBars } from "@/features/pokemon/components/stats-bars";
 import { StatsRangeTable } from "@/features/pokemon/components/stats-range-table";
 import { StatsRadar } from "@/features/pokemon/components/stats-radar";
@@ -24,7 +24,6 @@ import {
   getLocalizedName,
   getPokemonTypeColors,
 } from "@/features/pokemon/utils/format";
-import { getOfficialArtwork } from "@/features/pokemon/utils/sprites";
 
 type PokemonDetailViewProps = {
   id: string;
@@ -56,7 +55,6 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
   const displayName =
     getLocalizedName(species.names) || pokemon.name.replace(/-/g, " ");
   const [primaryColor, secondaryColor] = getPokemonTypeColors(pokemon.types);
-  const artwork = getOfficialArtwork(pokemon);
 
   return (
     <motion.div
@@ -106,16 +104,14 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
               transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
               className="relative mx-auto aspect-square w-full max-w-[240px]"
             >
-              {artwork && (
-                <Image
-                  src={artwork}
-                  alt={displayName}
-                  fill
-                  sizes="240px"
-                  priority
-                  className="object-contain drop-shadow-2xl"
-                />
-              )}
+              <PokemonSpriteImage
+                pokemon={pokemon}
+                alt={displayName}
+                fill
+                sizes="240px"
+                priority
+                className="object-contain drop-shadow-2xl"
+              />
             </motion.div>
 
             <div className="flex flex-wrap gap-2">

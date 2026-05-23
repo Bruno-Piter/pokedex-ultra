@@ -1,17 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { TypeBadge } from "@/features/pokemon/components/type-badge";
 import { TypeCardGlow } from "@/features/pokemon/components/type-card-glow";
+import { PokemonSpriteImage } from "@/features/pokemon/components/pokemon-sprite-image";
 import type { Pokemon } from "@/features/pokemon/types";
 import {
   formatPokemonId,
   getPokemonTypeColors,
 } from "@/features/pokemon/utils/format";
-import { getOfficialArtwork } from "@/features/pokemon/utils/sprites";
 
 type PokemonCardProps = {
   pokemon: Pokemon;
@@ -20,7 +19,6 @@ type PokemonCardProps = {
 
 export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
   const [primaryColor, secondaryColor] = getPokemonTypeColors(pokemon.types);
-  const artwork = getOfficialArtwork(pokemon);
 
   return (
     <motion.div
@@ -47,19 +45,13 @@ export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
             </div>
 
             <div className="relative mx-auto aspect-square w-full max-w-[140px]">
-              {artwork ? (
-                <Image
-                  src={artwork}
-                  alt={pokemon.name}
-                  fill
-                  sizes="140px"
-                  className="object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-110"
-                />
-              ) : (
-                <div className="flex size-full items-center justify-center text-muted-foreground">
-                  ?
-                </div>
-              )}
+              <PokemonSpriteImage
+                pokemon={pokemon}
+                alt={pokemon.name}
+                fill
+                sizes="140px"
+                className="object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-110"
+              />
             </div>
 
             <div className="space-y-2 text-center">

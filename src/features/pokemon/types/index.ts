@@ -55,6 +55,10 @@ export type PokemonMove = {
   version_group_details: VersionDetail[];
 };
 
+export type PokemonSpriteVersion = {
+  front_default?: string | null;
+};
+
 export type PokemonSprites = {
   front_default: string | null;
   other?: {
@@ -66,6 +70,7 @@ export type PokemonSprites = {
       front_default: string | null;
     };
   };
+  versions?: Record<string, Record<string, PokemonSpriteVersion>>;
 };
 
 export type Pokemon = {
