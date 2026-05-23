@@ -31,7 +31,7 @@ export function ThemeToggle() {
       size="icon"
       className="size-9"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      aria-label="Alternar tema"
+      aria-label="Toggle theme"
     >
       {theme === "dark" ? (
         <Sun className="size-4 transition-transform hover:rotate-45" />

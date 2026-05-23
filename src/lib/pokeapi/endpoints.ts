@@ -13,6 +13,7 @@ export const POKEAPI_ENDPOINTS = {
   game: "/version",
   versionGroup: "/version-group",
   machine: "/machine",
+  pokemonForm: "/pokemon-form",
   nature: "/nature",
 } as const;
 

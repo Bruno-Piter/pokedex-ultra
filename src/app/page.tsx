@@ -11,6 +11,7 @@ export default function HomePage() {
     type: null,
     sort: "id",
     generation: null,
+    statMin: null,
   });
 
   return (
@@ -23,10 +24,10 @@ export default function HomePage() {
           className="mb-8"
         >
           <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
-            Explore todos os Pokémon
+            Explore every Pokémon
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Navegue, filtre e descubra detalhes completos de cada criatura.
+            Browse, filter, and discover full details for each creature.
           </p>
         </motion.div>
 

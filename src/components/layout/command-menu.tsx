@@ -47,7 +47,7 @@ export function CommandMenu() {
         onClick={() => setOpen(true)}
       >
         <Search className="size-4 shrink-0" />
-        <span className="flex-1 text-left text-sm">Buscar Pokémon...</span>
+        <span className="flex-1 text-left text-sm">Search Pokémon...</span>
         <kbd className="pointer-events-none hidden rounded border bg-muted px-1.5 font-mono text-[10px] font-medium sm:inline-block">
           Ctrl+K
         </kbd>
@@ -57,16 +57,16 @@ export function CommandMenu() {
         size="icon"
         className="size-9 sm:hidden"
         onClick={() => setOpen(true)}
-        aria-label="Buscar"
+        aria-label="Search"
       >
         <Search className="size-4" />
       </Button>
 
       {open ? (
         <CommandDialog open={open} onOpenChange={setOpen}>
-          <CommandInput placeholder="Buscar por nome ou número..." />
+          <CommandInput placeholder="Search by name or number..." />
           <CommandList>
-            <CommandEmpty>Nenhum Pokémon encontrado.</CommandEmpty>
+            <CommandEmpty>No Pokémon found.</CommandEmpty>
             <CommandGroup heading="Pokémon">
               {index.map((item) => {
                 const id = item.url.split("/").filter(Boolean).pop();

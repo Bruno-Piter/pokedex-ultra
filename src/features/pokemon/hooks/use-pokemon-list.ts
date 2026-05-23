@@ -7,24 +7,34 @@ import {
   fetchPokemonByType,
   getPokemonList,
 } from "@/features/pokemon/api/pokemon.api";
+import type { Pokemon } from "@/features/pokemon/types";
 import {
   filterByGeneration,
+  filterByMinStat,
   sortPokemon,
 } from "@/features/pokemon/utils/format";
 import { pokeKeys, type PokemonListFilters } from "@/lib/pokeapi/query-keys";
 
-export function usePokemonList(filters: PokemonListFilters & { generation?: number | null }) {
+export function usePokemonList(
+  filters: PokemonListFilters & { generation?: number | null },
+) {
   return useInfiniteQuery({
     queryKey: pokeKeys.pokemon.list(filters),
     queryFn: async ({ pageParam = 0 }) => {
+      const applyFilters = (batch: Pokemon[]) => {
+        let pokemon = sortPokemon(batch, filters.sort);
+        pokemon = filterByGeneration(pokemon, filters.generation ?? null);
+        pokemon = filterByMinStat(pokemon, filters.statMin ?? null);
+        return pokemon;
+      };
+
       if (filters.type) {
         const { pokemon, total } = await fetchPokemonByType(
           filters.type,
           pageParam,
           PAGE_SIZE,
         );
-        const sorted = sortPokemon(pokemon, filters.sort);
-        const filtered = filterByGeneration(sorted, filters.generation ?? null);
+        const filtered = applyFilters(pokemon);
         return {
           pokemon: filtered,
           nextOffset: pageParam + PAGE_SIZE < total ? pageParam + PAGE_SIZE : null,
@@ -34,8 +44,7 @@ export function usePokemonList(filters: PokemonListFilters & { generation?: numb
 
       const list = await getPokemonList(pageParam, PAGE_SIZE);
       const batch = await fetchPokemonBatch(list.results.map((r) => r.url));
-      let pokemon = sortPokemon(batch, filters.sort);
-      pokemon = filterByGeneration(pokemon, filters.generation ?? null);
+      let pokemon = applyFilters(batch);
 
       if (filters.search) {
         const q = filters.search.toLowerCase();

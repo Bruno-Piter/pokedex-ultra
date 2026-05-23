@@ -129,7 +129,7 @@ export function MovesTable({ moves }: MovesTableProps) {
   if (isError) {
     return (
       <p className="text-sm text-muted-foreground">
-        Não foi possível carregar os movimentos.
+        Could not load moves.
       </p>
     );
   }
@@ -137,7 +137,7 @@ export function MovesTable({ moves }: MovesTableProps) {
   if (sections.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Nenhum movimento encontrado para a versão mais recente.
+        No moves found for the latest version group.
       </p>
     );
   }
