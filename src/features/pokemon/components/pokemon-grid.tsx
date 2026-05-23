@@ -38,9 +38,11 @@ function filterAndSortCatalog(catalog: Pokemon[], filters: FilterState): Pokemon
     );
   }
 
-  if (filters.type) {
+  if (filters.types.length > 0) {
     result = result.filter((pokemon) =>
-      pokemon.types.some((entry) => entry.type.name === filters.type),
+      filters.types.every((type) =>
+        pokemon.types.some((entry) => entry.type.name === type),
+      ),
     );
   }
 
@@ -95,7 +97,7 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [
-    filters.type,
+    filters.types,
     filters.generation,
     filters.statSort,
     filters.sort,

@@ -11,7 +11,7 @@ export default function HomePage() {
   usePokemonCatalog();
 
   const [filters, setFilters] = useState<FilterState>({
-    type: null,
+    types: [],
     sort: "id",
     sortDirection: "asc",
     generation: null,
@@ -39,7 +39,7 @@ export default function HomePage() {
           </p>
         </motion.div>
 
-        <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           <Sidebar filters={filters} onChange={setFilters} />
           <div className="min-w-0 flex-1">
             <PokemonGrid filters={filters} />
