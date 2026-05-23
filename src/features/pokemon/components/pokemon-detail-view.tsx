@@ -45,15 +45,15 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8">
         <ErrorState
-          message="Não foi possível carregar este Pokémon."
+          message="Could not load this Pokémon."
           onRetry={() => refetch()}
         />
       </div>
     );
   }
 
-  const namePt = getLocalizedName(species.names);
-  const displayName = namePt || pokemon.name.replace(/-/g, " ");
+  const displayName =
+    getLocalizedName(species.names) || pokemon.name.replace(/-/g, " ");
   const primaryType = pokemon.types[0]?.type.name ?? "normal";
   const color = getTypeColor(primaryType);
   const artwork = getOfficialArtwork(pokemon);
@@ -69,7 +69,7 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
         className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        Voltar à Pokédex
+        Back to Pokédex
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
@@ -94,7 +94,7 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
               <h1 className="font-heading text-2xl font-bold capitalize sm:text-3xl">
                 {displayName}
               </h1>
-              {namePt && (
+              {displayName !== pokemon.name.replace(/-/g, " ") && (
                 <p className="text-sm capitalize text-muted-foreground">
                   {pokemon.name.replace(/-/g, " ")}
                 </p>
@@ -126,11 +126,11 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
 
             <div className="grid grid-cols-2 gap-3 text-center text-sm">
               <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground">Altura</p>
+                <p className="text-xs text-muted-foreground">Height</p>
                 <p className="font-semibold">{formatHeight(pokemon.height)}</p>
               </div>
               <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground">Peso</p>
+                <p className="text-xs text-muted-foreground">Weight</p>
                 <p className="font-semibold">{formatWeight(pokemon.weight)}</p>
               </div>
             </div>
@@ -140,11 +140,11 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
         <div className="glass-card rounded-2xl p-4 sm:p-6">
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="mb-6 flex h-auto w-full flex-wrap gap-1 bg-muted/50 p-1">
-              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="stats">Stats</TabsTrigger>
               <TabsTrigger value="moves">Moves</TabsTrigger>
-              <TabsTrigger value="evolution">Evolução</TabsTrigger>
-              <TabsTrigger value="abilities">Habilidades</TabsTrigger>
+              <TabsTrigger value="evolution">Evolution</TabsTrigger>
+              <TabsTrigger value="abilities">Abilities</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-0">
@@ -189,10 +189,13 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
                 transition={{ duration: 0.2 }}
               >
                 {evolution ? (
-                  <EvolutionTree chain={evolution.chain} />
+                  <EvolutionTree
+                    chain={evolution.chain}
+                    evolutionChainId={evolution.id}
+                  />
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Este Pokémon não possui evoluções.
+                    This Pokémon does not evolve.
                   </p>
                 )}
               </motion.div>

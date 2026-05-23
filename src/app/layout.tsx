@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Pokédex Ultra",
   description:
-    "Pokédex moderna consumindo a PokéAPI — explore Pokémon, stats, evoluções e muito mais.",
+    "A modern Pokédex powered by PokéAPI — explore Pokémon, stats, evolutions, and more.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="pt-BR"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
       suppressHydrationWarning
     >

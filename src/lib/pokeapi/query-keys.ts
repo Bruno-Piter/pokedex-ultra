@@ -18,6 +18,8 @@ export const pokeKeys = {
   },
   evolution: {
     detail: (id: number) => [...pokeKeys.all, "evolution", id] as const,
+    extended: (id: number) =>
+      [...pokeKeys.all, "evolution", "extended", id] as const,
   },
   ability: {
     detail: (name: string) => [...pokeKeys.all, "ability", name] as const,
@@ -35,8 +37,11 @@ export const pokeKeys = {
   },
 };
 
+import type { PokemonSortOption, StatFilterStat } from "@/features/pokemon/types";
+
 export type PokemonListFilters = {
   type?: string;
-  sort: "id" | "name" | "weight" | "height";
+  sort: PokemonSortOption;
   search?: string;
+  statMin?: { stat: StatFilterStat; min: number } | null;
 };

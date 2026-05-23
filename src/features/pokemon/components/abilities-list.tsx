@@ -18,9 +18,8 @@ function AbilityCard({ entry, index }: AbilityCardProps) {
   const { data: ability } = useAbility(entry.ability.name);
 
   const effect =
-    ability?.effect_entries.find((e) => e.language.name === "pt")?.short_effect ??
     ability?.effect_entries.find((e) => e.language.name === "en")?.short_effect ??
-    getFlavorText(ability?.flavor_text_entries ?? [], "pt");
+    getFlavorText(ability?.flavor_text_entries ?? [], "en");
 
   return (
     <motion.div
@@ -40,7 +39,7 @@ function AbilityCard({ entry, index }: AbilityCardProps) {
           </span>
           {entry.is_hidden && (
             <Badge variant="secondary" className="text-[10px]">
-              Oculta
+              Hidden
             </Badge>
           )}
         </div>

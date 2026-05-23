@@ -23,6 +23,7 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
       type: filters.type ?? undefined,
       sort: filters.sort,
       generation: filters.generation,
+      statMin: filters.statMin,
     });
 
   const allPokemon = data?.pages.flatMap((p) => p.pokemon) ?? [];
@@ -57,9 +58,9 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
         animate={{ opacity: 1 }}
         className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed p-16 text-center"
       >
-        <p className="font-semibold">Nenhum Pokémon encontrado</p>
+        <p className="font-semibold">No Pokémon found</p>
         <p className="text-sm text-muted-foreground">
-          Tente ajustar os filtros selecionados.
+          Try adjusting the selected filters.
         </p>
       </motion.div>
     );
@@ -81,12 +82,12 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
         {isFetchingNextPage && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            Carregando mais...
+            Loading more...
           </div>
         )}
         {!hasNextPage && allPokemon.length > 0 && (
           <p className="text-sm text-muted-foreground">
-            Todos os Pokémon carregados ({allPokemon.length})
+            All Pokémon loaded ({allPokemon.length})
           </p>
         )}
       </div>

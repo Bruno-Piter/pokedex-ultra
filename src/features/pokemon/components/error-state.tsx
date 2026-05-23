@@ -10,7 +10,7 @@ type ErrorStateProps = {
 };
 
 export function ErrorState({
-  message = "Algo deu errado ao carregar os dados.",
+  message = "Something went wrong while loading data.",
   onRetry,
 }: ErrorStateProps) {
   return (
@@ -21,13 +21,13 @@ export function ErrorState({
     >
       <AlertCircle className="size-10 text-destructive" />
       <div className="space-y-1">
-        <p className="font-semibold">Erro ao carregar</p>
+        <p className="font-semibold">Failed to load</p>
         <p className="text-sm text-muted-foreground">{message}</p>
       </div>
       {onRetry && (
         <Button variant="outline" onClick={onRetry} className="gap-2">
           <RefreshCw className="size-4" />
-          Tentar novamente
+          Try again
         </Button>
       )}
     </motion.div>

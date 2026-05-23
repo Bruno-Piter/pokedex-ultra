@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Filter, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -11,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import type { PokemonSortOption, StatFilterStat } from "@/features/pokemon/types";
+import { STAT_LABELS } from "@/features/pokemon/utils/stats-calculator";
 import {
   GENERATION_RANGES,
   POKEMON_TYPES,
@@ -20,8 +23,9 @@ import { cn } from "@/lib/utils";
 
 export type FilterState = {
   type: string | null;
-  sort: "id" | "name" | "weight" | "height";
+  sort: PokemonSortOption;
   generation: number | null;
+  statMin: { stat: StatFilterStat; min: number } | null;
 };
 
 type SidebarProps = {
@@ -29,9 +33,36 @@ type SidebarProps = {
   onChange: (filters: FilterState) => void;
 };
 
+const SORT_OPTIONS: { value: PokemonSortOption; label: string }[] = [
+  { value: "id", label: "Number (#)" },
+  { value: "name", label: "Name" },
+  { value: "weight", label: "Weight" },
+  { value: "height", label: "Height" },
+  { value: "hp", label: "HP (high → low)" },
+  { value: "attack", label: "Attack (high → low)" },
+  { value: "defense", label: "Defense (high → low)" },
+  { value: "special-attack", label: "Sp. Attack (high → low)" },
+  { value: "special-defense", label: "Sp. Defense (high → low)" },
+  { value: "speed", label: "Speed (high → low)" },
+  { value: "bst", label: "Base Stat Total (high → low)" },
+];
+
+const STAT_FILTER_OPTIONS: { value: StatFilterStat; label: string }[] = [
+  { value: "hp", label: STAT_LABELS.hp },
+  { value: "attack", label: STAT_LABELS.attack },
+  { value: "defense", label: STAT_LABELS.defense },
+  { value: "special-attack", label: STAT_LABELS["special-attack"] },
+  { value: "special-defense", label: STAT_LABELS["special-defense"] },
+  { value: "speed", label: STAT_LABELS.speed },
+  { value: "bst", label: "Base Stat Total" },
+];
+
 export function Sidebar({ filters, onChange }: SidebarProps) {
   const reset = () =>
-    onChange({ type: null, sort: "id", generation: null });
+    onChange({ type: null, sort: "id", generation: null, statMin: null });
+
+  const statFilterStat = filters.statMin?.stat ?? "hp";
+  const statFilterMin = filters.statMin?.min ?? 0;
 
   return (
     <motion.aside
@@ -43,11 +74,11 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <Filter className="size-4" />
-            Filtros
+            Filters
           </div>
           <Button variant="ghost" size="sm" onClick={reset} className="h-8 gap-1">
             <RotateCcw className="size-3" />
-            Limpar
+            Clear
           </Button>
         </div>
 
@@ -55,30 +86,31 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
 
         <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground">
-            Ordenar por
+            Sort by
           </label>
           <Select
             value={filters.sort}
             onValueChange={(v) => {
               if (!v) return;
-              onChange({ ...filters, sort: v as FilterState["sort"] });
+              onChange({ ...filters, sort: v as PokemonSortOption });
             }}
           >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="id">Número (#)</SelectItem>
-              <SelectItem value="name">Nome</SelectItem>
-              <SelectItem value="weight">Peso</SelectItem>
-              <SelectItem value="height">Altura</SelectItem>
+              {SORT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground">
-            Geração
+            Generation
           </label>
           <Select
             value={filters.generation?.toString() ?? "all"}
@@ -91,10 +123,10 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Todas" />
+              <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {GENERATION_RANGES.map((g) => (
                 <SelectItem key={g.gen} value={g.gen.toString()}>
                   {g.label}
@@ -106,7 +138,50 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
 
         <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground">
-            Tipo
+            Min base stat
+          </label>
+          <Select
+            value={statFilterStat}
+            onValueChange={(v) => {
+              if (!v) return;
+              const stat = v as StatFilterStat;
+              onChange({
+                ...filters,
+                statMin: statFilterMin > 0 ? { stat, min: statFilterMin } : null,
+              });
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STAT_FILTER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            type="number"
+            min={0}
+            max={999}
+            placeholder="Min value (0 = off)"
+            value={statFilterMin || ""}
+            onChange={(e) => {
+              const min = Number(e.target.value) || 0;
+              onChange({
+                ...filters,
+                statMin:
+                  min > 0 ? { stat: statFilterStat, min } : null,
+              });
+            }}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">
+            Type
           </label>
           <div className="flex flex-wrap gap-1.5">
             <button
@@ -119,7 +194,7 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
                   : "bg-muted text-muted-foreground hover:bg-muted/80",
               )}
             >
-              Todos
+              All
             </button>
             {POKEMON_TYPES.map((type) => (
               <motion.button

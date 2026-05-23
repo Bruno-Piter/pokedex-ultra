@@ -1,4 +1,10 @@
-import type { FlavorText, LocalizedName, Pokemon } from "@/features/pokemon/types";
+import type {
+  FlavorText,
+  LocalizedName,
+  Pokemon,
+  PokemonSortOption,
+  StatFilterStat,
+} from "@/features/pokemon/types";
 
 export const POKEMON_TYPES = [
   "normal",
@@ -50,20 +56,23 @@ export function getTypeColor(type: string): string {
 
 export function getLocalizedName(
   names: LocalizedName[],
-  preferred = "pt-BR",
+  preferred = "en",
 ): string {
-  const pt = names.find((n) => n.language.name === preferred);
-  if (pt) return pt.name;
+  const match = names.find((n) => n.language.name === preferred);
+  if (match) return match.name;
   const en = names.find((n) => n.language.name === "en");
   return en?.name ?? names[0]?.name ?? "";
 }
 
 export function getFlavorText(
   entries: FlavorText[],
-  preferred = "pt-BR",
+  preferred = "en",
 ): string {
-  const ptEntries = entries.filter((e) => e.language.name === preferred);
-  const pool = ptEntries.length > 0 ? ptEntries : entries.filter((e) => e.language.name === "en");
+  const preferredEntries = entries.filter((e) => e.language.name === preferred);
+  const pool =
+    preferredEntries.length > 0
+      ? preferredEntries
+      : entries.filter((e) => e.language.name === "en");
   const latest = pool[pool.length - 1];
   return latest?.flavor_text.replace(/\f/g, " ").replace(/\n/g, " ") ?? "";
 }
@@ -81,15 +90,25 @@ export function formatHeight(height: number): string {
 }
 
 export function formatGenderRate(rate: number): string {
-  if (rate === -1) return "Sem gênero";
+  if (rate === -1) return "Genderless";
   const female = (rate / 8) * 100;
   const male = 100 - female;
   return `${male.toFixed(0)}% ♂ / ${female.toFixed(0)}% ♀`;
 }
 
+export function getPokemonStatValue(
+  pokemon: Pokemon,
+  stat: StatFilterStat,
+): number {
+  if (stat === "bst") {
+    return pokemon.stats.reduce((sum, s) => sum + s.base_stat, 0);
+  }
+  return pokemon.stats.find((s) => s.stat.name === stat)?.base_stat ?? 0;
+}
+
 export function sortPokemon(
   pokemon: Pokemon[],
-  sort: "id" | "name" | "weight" | "height",
+  sort: PokemonSortOption,
 ): Pokemon[] {
   return [...pokemon].sort((a, b) => {
     switch (sort) {
@@ -99,22 +118,40 @@ export function sortPokemon(
         return b.weight - a.weight;
       case "height":
         return b.height - a.height;
+      case "hp":
+      case "attack":
+      case "defense":
+      case "special-attack":
+      case "special-defense":
+      case "speed":
+      case "bst":
+        return getPokemonStatValue(b, sort) - getPokemonStatValue(a, sort);
       default:
         return a.id - b.id;
     }
   });
 }
 
+export function filterByMinStat(
+  pokemon: Pokemon[],
+  filter: { stat: StatFilterStat; min: number } | null,
+): Pokemon[] {
+  if (!filter || filter.min <= 0) return pokemon;
+  return pokemon.filter(
+    (p) => getPokemonStatValue(p, filter.stat) >= filter.min,
+  );
+}
+
 export const GENERATION_RANGES = [
-  { gen: 1, label: "Geração I", min: 1, max: 151 },
-  { gen: 2, label: "Geração II", min: 152, max: 251 },
-  { gen: 3, label: "Geração III", min: 252, max: 386 },
-  { gen: 4, label: "Geração IV", min: 387, max: 493 },
-  { gen: 5, label: "Geração V", min: 494, max: 649 },
-  { gen: 6, label: "Geração VI", min: 650, max: 721 },
-  { gen: 7, label: "Geração VII", min: 722, max: 809 },
-  { gen: 8, label: "Geração VIII", min: 810, max: 905 },
-  { gen: 9, label: "Geração IX", min: 906, max: 1025 },
+  { gen: 1, label: "Generation I", min: 1, max: 151 },
+  { gen: 2, label: "Generation II", min: 152, max: 251 },
+  { gen: 3, label: "Generation III", min: 252, max: 386 },
+  { gen: 4, label: "Generation IV", min: 387, max: 493 },
+  { gen: 5, label: "Generation V", min: 494, max: 649 },
+  { gen: 6, label: "Generation VI", min: 650, max: 721 },
+  { gen: 7, label: "Generation VII", min: 722, max: 809 },
+  { gen: 8, label: "Generation VIII", min: 810, max: 905 },
+  { gen: 9, label: "Generation IX", min: 906, max: 1025 },
 ] as const;
 
 export function filterByGeneration(

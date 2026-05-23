@@ -8,7 +8,6 @@ import {
   formatHeight,
   formatWeight,
   getFlavorText,
-  getLocalizedName,
 } from "@/features/pokemon/utils/format";
 
 type PokemonOverviewProps = {
@@ -17,7 +16,6 @@ type PokemonOverviewProps = {
 };
 
 export function PokemonOverview({ pokemon, species }: PokemonOverviewProps) {
-  const namePt = getLocalizedName(species.names);
   const description = getFlavorText(species.flavor_text_entries);
 
   return (
@@ -32,28 +30,24 @@ export function PokemonOverview({ pokemon, species }: PokemonOverviewProps) {
         </p>
       )}
 
-      {namePt && namePt !== pokemon.name && (
-        <p className="text-sm">
-          <span className="text-muted-foreground">Nome em PT: </span>
-          <span className="font-semibold">{namePt}</span>
-        </p>
-      )}
-
       <div className="grid gap-4 sm:grid-cols-2">
-        <InfoItem label="Habitat" value={species.habitat?.name ?? "Desconhecido"} />
-        <InfoItem label="Cor" value={species.color.name} />
-        <InfoItem label="Taxa de captura" value={String(species.capture_rate)} />
-        <InfoItem label="Felicidade base" value={String(species.base_happiness)} />
-        <InfoItem label="Gênero" value={formatGenderRate(species.gender_rate)} />
-        <InfoItem label="Geração" value={species.generation.name.replace(/-/g, " ")} />
+        <InfoItem label="Habitat" value={species.habitat?.name ?? "Unknown"} />
+        <InfoItem label="Color" value={species.color.name} />
+        <InfoItem label="Catch rate" value={String(species.capture_rate)} />
+        <InfoItem label="Base happiness" value={String(species.base_happiness)} />
+        <InfoItem label="Gender" value={formatGenderRate(species.gender_rate)} />
+        <InfoItem
+          label="Generation"
+          value={species.generation.name.replace(/-/g, " ")}
+        />
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {species.is_legendary && <Badge variant="secondary">Lendário</Badge>}
-        {species.is_mythical && <Badge variant="secondary">Mítico</Badge>}
-        <Badge variant="outline">EXP Base: {pokemon.base_experience}</Badge>
-        <Badge variant="outline">Peso: {formatWeight(pokemon.weight)}</Badge>
-        <Badge variant="outline">Altura: {formatHeight(pokemon.height)}</Badge>
+        {species.is_legendary && <Badge variant="secondary">Legendary</Badge>}
+        {species.is_mythical && <Badge variant="secondary">Mythical</Badge>}
+        <Badge variant="outline">Base EXP: {pokemon.base_experience}</Badge>
+        <Badge variant="outline">Weight: {formatWeight(pokemon.weight)}</Badge>
+        <Badge variant="outline">Height: {formatHeight(pokemon.height)}</Badge>
       </div>
     </motion.div>
   );

@@ -8,6 +8,7 @@ import type {
   NamedResource,
   Pokemon,
   PokemonSpecies,
+  PokemonFormData,
   ResourceList,
   TypeData,
   VersionGroup,
@@ -59,6 +60,19 @@ export async function getPokemonSpecies(id: number): Promise<PokemonSpecies> {
   return pokeFetch<PokemonSpecies>(
     `${POKEAPI_ENDPOINTS.pokemonSpecies}/${id}`,
   );
+}
+
+export async function getPokemonForm(id: number): Promise<PokemonFormData> {
+  return pokeFetch<PokemonFormData>(`${POKEAPI_ENDPOINTS.pokemonForm}/${id}`);
+}
+
+export async function getPokemonFormByPokemonName(
+  pokemonName: string,
+): Promise<PokemonFormData | null> {
+  const pokemon = await getPokemonByIdOrName(pokemonName);
+  const formUrl = pokemon.forms?.[0]?.url;
+  if (!formUrl) return null;
+  return getPokemonForm(extractIdFromUrl(formUrl));
 }
 
 export async function getEvolutionChain(id: number): Promise<EvolutionChain> {

@@ -81,6 +81,7 @@ export type Pokemon = {
   abilities: PokemonAbility[];
   moves: PokemonMove[];
   species: NamedResource;
+  forms: NamedResource[];
 };
 
 export type PokemonSpecies = {
@@ -98,6 +99,22 @@ export type PokemonSpecies = {
   evolution_chain: NamedResource;
   flavor_text_entries: FlavorText[];
   names: LocalizedName[];
+  varieties: SpeciesVariety[];
+};
+
+export type SpeciesVariety = {
+  is_default: boolean;
+  pokemon: NamedResource;
+};
+
+export type PokemonFormData = {
+  id: number;
+  name: string;
+  form_name: string;
+  is_mega: boolean;
+  is_battle_only: boolean;
+  is_default: boolean;
+  pokemon: NamedResource;
 };
 
 export type EvolutionDetail = {
@@ -105,13 +122,44 @@ export type EvolutionDetail = {
   item: NamedResource | null;
   trigger: NamedResource;
   gender: number | null;
+  min_happiness?: number | null;
+  min_affection?: number | null;
+  time_of_day?: string;
+  known_move?: NamedResource | null;
 };
+
+export type PokemonSortOption =
+  | "id"
+  | "name"
+  | "weight"
+  | "height"
+  | "hp"
+  | "attack"
+  | "defense"
+  | "special-attack"
+  | "special-defense"
+  | "speed"
+  | "bst";
+
+export type StatFilterStat = StatName | "bst";
 
 export type ChainLink = {
   is_baby: boolean;
   species: NamedResource;
   evolution_details: EvolutionDetail[];
   evolves_to: ChainLink[];
+};
+
+export type ExtendedChainLink = {
+  species: NamedResource;
+  speciesId: number;
+  pokemonId: number;
+  pokemonName: string;
+  displayName: string;
+  isFormBranch: boolean;
+  connectorLabel: string | null;
+  evolution_details: EvolutionDetail[];
+  evolves_to: ExtendedChainLink[];
 };
 
 export type EvolutionChain = {
