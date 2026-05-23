@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { PokemonCard } from "@/features/pokemon/components/pokemon-card";
+import { POKEMON_LIST_ROW_CLASS } from "@/features/pokemon/components/pokemon-list-row-layout";
 import {
   PokemonGridSkeleton,
 } from "@/features/pokemon/components/pokemon-skeleton";
@@ -16,6 +17,7 @@ import {
   matchesPokemonSearch,
   sortPokemonByStatPriority,
 } from "@/features/pokemon/utils/format";
+import { STAT_ORDER, STAT_SHORT_LABELS } from "@/features/pokemon/utils/stats-calculator";
 
 type PokemonGridProps = {
   filters: FilterState;
@@ -38,6 +40,26 @@ function filterAndSortCatalog(catalog: Pokemon[], filters: FilterState): Pokemon
 
   result = filterByGeneration(result, filters.generation);
   return sortPokemonByStatPriority(result, filters.statSort, filters.sort);
+}
+
+function PokemonListHeader() {
+  return (
+    <div className="hidden overflow-hidden px-3 sm:block sm:px-4">
+      <div
+        className={`${POKEMON_LIST_ROW_CLASS} border-b border-border/50 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground`}
+      >
+        <span />
+        <span>Name</span>
+        <span>Type</span>
+        <span>Abilities</span>
+        {STAT_ORDER.map((stat) => (
+          <span key={stat} className="text-center">
+            {STAT_SHORT_LABELS[stat]}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function PokemonGrid({ filters }: PokemonGridProps) {
@@ -107,21 +129,22 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {filters.search.trim() ? (
         <p className="text-sm text-muted-foreground">
           {sortedCatalog.length} resultado{sortedCatalog.length === 1 ? "" : "s"} para &quot;{filters.search.trim()}&quot;
         </p>
       ) : null}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4"
-      >
-        {visibleCatalog.map((pokemon, index) => (
-          <PokemonCard key={pokemon.id} pokemon={pokemon} index={index} />
-        ))}
-      </motion.div>
+
+      <div className="overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] sm:overflow-x-visible [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-[640px] flex-col gap-2 sm:min-w-0">
+          <PokemonListHeader />
+
+          {visibleCatalog.map((pokemon, index) => (
+            <PokemonCard key={pokemon.id} pokemon={pokemon} index={index} />
+          ))}
+        </div>
+      </div>
 
       <div ref={loadMoreRef} className="flex justify-center py-6">
         {!hasMoreCatalog && (
