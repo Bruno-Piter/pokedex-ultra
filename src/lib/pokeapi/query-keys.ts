@@ -15,6 +15,7 @@ export const pokeKeys = {
     catalog: () => [...pokeKeys.pokemon.all(), "catalog"] as const,
   },
   type: {
+    all: () => [...pokeKeys.all, "type", "all"] as const,
     detail: (name: string) => [...pokeKeys.all, "type", name] as const,
   },
   evolution: {

@@ -113,6 +113,49 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
 
         <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground">
+            Generation
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => onChange({ ...filters, generation: null })}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
+                !filters.generation
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80",
+              )}
+            >
+              All
+            </button>
+            {GENERATION_RANGES.map((g) => (
+              <motion.button
+                key={g.gen}
+                type="button"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() =>
+                  onChange({
+                    ...filters,
+                    generation: filters.generation === g.gen ? null : g.gen,
+                  })
+                }
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
+                  filters.generation === g.gen
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted",
+                )}
+                title={g.label}
+              >
+                {g.label.replace("Generation ", "Gen ")}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">
             Sort by stats
           </label>
           <p className="text-[11px] leading-snug text-muted-foreground">
@@ -141,34 +184,6 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
               );
             })}
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">
-            Generation
-          </label>
-          <Select
-            value={filters.generation?.toString() ?? "all"}
-            onValueChange={(v) => {
-              if (!v) return;
-              onChange({
-                ...filters,
-                generation: v === "all" ? null : Number(v),
-              });
-            }}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {GENERATION_RANGES.map((g) => (
-                <SelectItem key={g.gen} value={g.gen.toString()}>
-                  {g.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="space-y-2">
