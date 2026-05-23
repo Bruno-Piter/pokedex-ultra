@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { ArtworkToggle } from "@/components/layout/artwork-toggle";
 
 const CommandMenu = dynamic(
   () =>
@@ -39,6 +40,7 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <CommandMenu />
+          <ArtworkToggle />
           <ThemeToggle />
         </div>
       </div>

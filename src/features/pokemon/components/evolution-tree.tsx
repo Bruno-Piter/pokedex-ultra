@@ -1,15 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ChainLink, ExtendedChainLink } from "@/features/pokemon/types";
 import { useExtendedEvolutionChain } from "@/features/pokemon/hooks/use-extended-evolution-chain";
+import { PokemonIdSpriteImage } from "@/features/pokemon/components/pokemon-id-sprite-image";
 import { formatPokemonId } from "@/features/pokemon/utils/format";
 import { getEvolutionLabel } from "@/features/pokemon/utils/evolution-format";
-import { getSpriteUrl } from "@/features/pokemon/utils/sprites";
 import { cn } from "@/lib/utils";
 
 type EvolutionTreeProps = {
@@ -46,8 +45,8 @@ function EvolutionCell({ link }: { link: ExtendedChainLink }) {
         )}
       >
         <div className="relative size-[4.5rem] shrink-0">
-          <Image
-            src={getSpriteUrl(link.pokemonId, "artwork")}
+          <PokemonIdSpriteImage
+            pokemonId={link.pokemonId}
             alt={link.displayName}
             fill
             sizes="72px"
