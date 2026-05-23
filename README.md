@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pokédex Ultra
 
-## Getting Started
+Uma Pokédex moderna e interativa, feita depois de poucos anos de prática de programação — um projeto para explorar dados reais da [PokéAPI](https://pokeapi.co/), experimentar uma stack atual de front-end e consolidar o que aprendi ao longo do caminho.
 
-First, run the development server:
+## Sobre o projeto
+
+O **Pokédex Ultra** permite navegar por centenas de Pokémon, filtrar por tipo, geração e ordenação, buscar rapidamente pelo nome e abrir páginas de detalhe com informações completas: stats, moves, habilidades, evolução e muito mais.
+
+Interface em português, tema claro/escuro e animações sutis para deixar a experiência mais fluida.
+
+## Funcionalidades
+
+- **Listagem completa** — grid responsivo com paginação e filtros (tipo, geração, ordenação)
+- **Busca rápida** — command menu (`Ctrl+K` / `Cmd+K`) para ir direto a qualquer Pokémon
+- **Página de detalhe** — artwork oficial, tipos, medidas, descrição e árvore de evolução
+- **Stats** — gráfico radar, barras de base stats e tabela min/máx por nível (50, 100, 150, 200), inspirada em referências como Serebii
+- **Moves** — agrupados por Level Up, TM/HM, Egg e Tutor, com tipo, poder, precisão e PP
+- **Tema** — alternância entre modo claro e escuro
+
+## Stack
+
+| Tecnologia | Uso |
+|---|---|
+| [Next.js 16](https://nextjs.org/) | App Router, SSR/CSR |
+| [React 19](https://react.dev/) | UI |
+| [TypeScript](https://www.typescriptlang.org/) | Tipagem |
+| [TanStack Query](https://tanstack.com/query) | Cache e fetching da API |
+| [Tailwind CSS 4](https://tailwindcss.com/) | Estilização |
+| [shadcn/ui](https://ui.shadcn.com/) + Base UI | Componentes |
+| [Framer Motion](https://www.framer.com/motion/) | Animações |
+| [Recharts](https://recharts.org/) | Gráfico de stats |
+| [PokéAPI](https://pokeapi.co/) | Dados dos Pokémon |
+
+## Como rodar
+
+Pré-requisitos: **Node.js 20+** e **npm**.
 
 ```bash
+# Clonar o repositório
+git clone https://github.com/Bruno-Piter/pokedex-ultra.git
+cd pokedex-ultra
+
+# Instalar dependências
+npm install
+
+# Subir o servidor de desenvolvimento
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000) no navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Outros comandos
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build   # Build de produção
+npm run start   # Servir build de produção
+npm run lint    # ESLint
+```
 
-## Learn More
+## Estrutura do projeto
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/                    # Rotas (App Router)
+├── components/             # Layout e UI compartilhados
+├── features/pokemon/       # Domínio Pokémon (API, hooks, componentes)
+├── lib/pokeapi/            # Cliente HTTP e endpoints
+└── providers/              # Theme e React Query
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Autor
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Bruno Piter** — [GitHub](https://github.com/Bruno-Piter)
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Dados fornecidos pela [PokéAPI](https://pokeapi.co/). Pokémon e nomes relacionados são marcas registradas da Nintendo, Game Freak e The Pokémon Company.
