@@ -89,7 +89,7 @@ export function PokemonCard({ pokemon, index = 0, statSort = [] }: PokemonCardPr
                 <p
                   key={stat}
                   className={cn(
-                    "text-center font-mono text-sm tabular-nums",
+                    "min-w-0 text-center font-mono text-xs tabular-nums sm:text-sm",
                     isStatColumnHighlighted(stat, statSort) &&
                       "font-semibold text-destructive",
                   )}

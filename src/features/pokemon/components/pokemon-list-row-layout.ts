@@ -1,2 +1,5 @@
 export const POKEMON_LIST_ROW_CLASS =
-  "grid w-full min-w-[680px] grid-cols-[72px_140px_110px_minmax(140px,1fr)_repeat(6,40px)_44px] items-center gap-3";
+  "grid w-full min-w-0 grid-cols-[4.5rem_minmax(0,1.05fr)_minmax(0,0.72fr)_minmax(0,1.1fr)_repeat(6,minmax(0,0.42fr))_minmax(0,0.48fr)] items-center gap-2 sm:gap-2.5";
+
+/** min-width só no mobile, quando a lista rola horizontalmente */
+export const POKEMON_LIST_MOBILE_MIN_WIDTH = "min-w-[640px]";

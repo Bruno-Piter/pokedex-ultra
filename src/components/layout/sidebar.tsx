@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FILTER_SIDEBAR_WIDTH_CLASS } from "@/components/layout/layout-constants";
 import { FilterSection } from "@/components/layout/filter-section";
 import {
   countActiveFilters,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import type {
   PokemonSortOption,
+  SortDirection,
   StatFilterStat,
 } from "@/features/pokemon/types";
 import {
@@ -71,6 +73,39 @@ function getStatChipColor(stat: StatFilterStat): string | undefined {
   return STAT_COLORS[stat];
 }
 
+type SortDirectionButtonProps = {
+  direction: SortDirection;
+  onToggle: () => void;
+};
+
+function SortDirectionButton({ direction, onToggle }: SortDirectionButtonProps) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      className={cn(
+        "shrink-0 transition-colors",
+        direction === "desc" &&
+          "border-primary/40 bg-primary/15 ring-1 ring-primary/30",
+      )}
+      aria-label={
+        direction === "asc"
+          ? "Ordenar do menor para o maior"
+          : "Ordenar do maior para o menor"
+      }
+      title={direction === "asc" ? "Menor → maior" : "Maior → menor"}
+      onClick={onToggle}
+    >
+      {direction === "asc" ? (
+        <ArrowUp className="size-4" />
+      ) : (
+        <ArrowDown className="size-4" />
+      )}
+    </Button>
+  );
+}
+
 export function Sidebar({ filters, onChange }: SidebarProps) {
   const activeTotal = countActiveFilters(filters);
   const filtersActive = hasActiveFilters(filters);
@@ -90,6 +125,7 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
       types: [],
       sort: "id",
       sortDirection: "asc",
+      statSortDirection: "asc",
       generation: null,
       statSort: [],
       search: "",
@@ -105,14 +141,21 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
   const sortSectionActive =
     (filters.sort !== "id" ? 1 : 0) + (filters.sortDirection !== "asc" ? 1 : 0);
 
+  const statSectionActive =
+    filters.statSort.length +
+    (filters.statSort.length > 0 && filters.statSortDirection !== "asc" ? 1 : 0);
+
   return (
     <motion.aside
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="sticky top-20 z-30 w-full max-h-[calc(100vh-5.5rem)] shrink-0 self-start overflow-y-auto overscroll-contain lg:w-72"
+      className={cn(
+        "sticky top-16 z-30 w-full shrink-0 self-start",
+        FILTER_SIDEBAR_WIDTH_CLASS,
+      )}
     >
-      <div className="filter-card-accent glass-card space-y-4 rounded-2xl p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-2">
+      <div className="filter-card-accent glass-card flex max-h-[calc(100dvh-4.75rem)] flex-col overflow-hidden rounded-2xl">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/30 p-3 sm:px-4">
           <div className="flex items-center gap-2">
             <span className="relative size-8 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/50">
               <Image
@@ -167,6 +210,7 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
           </Button>
         </div>
 
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:px-4 sm:pb-4">
         <FilterSection
           index={0}
           icon={<ArrowUpDown className="size-3.5" />}
@@ -194,39 +238,16 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className={cn(
-                "shrink-0 transition-colors",
-                filters.sortDirection === "desc" &&
-                  "border-primary/40 bg-primary/15 ring-1 ring-primary/30",
-              )}
-              aria-label={
-                filters.sortDirection === "asc"
-                  ? "Ordenar do menor para o maior"
-                  : "Ordenar do maior para o menor"
-              }
-              title={
-                filters.sortDirection === "asc"
-                  ? "Menor → maior"
-                  : "Maior → menor"
-              }
-              onClick={() =>
+            <SortDirectionButton
+              direction={filters.sortDirection}
+              onToggle={() =>
                 onChange({
                   ...filters,
                   sortDirection:
                     filters.sortDirection === "asc" ? "desc" : "asc",
                 })
               }
-            >
-              {filters.sortDirection === "asc" ? (
-                <ArrowUp className="size-4" />
-              ) : (
-                <ArrowDown className="size-4" />
-              )}
-            </Button>
+            />
           </div>
         </FilterSection>
 
@@ -284,9 +305,21 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
           index={2}
           icon={<ArrowUpDown className="size-3.5" />}
           title="Sort by stats"
-          hint="Clique para ordenar. Múltiplos stats = média dos valores selecionados."
-          activeCount={filters.statSort.length}
+          hint="Múltiplos stats = média dos valores."
+          activeCount={statSectionActive}
         >
+          <div className="mb-2 flex justify-end">
+            <SortDirectionButton
+              direction={filters.statSortDirection}
+              onToggle={() =>
+                onChange({
+                  ...filters,
+                  statSortDirection:
+                    filters.statSortDirection === "asc" ? "desc" : "asc",
+                })
+              }
+            />
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {STAT_SORT_OPTIONS.map((opt) => {
               const isActive = filters.statSort.includes(opt.value);
@@ -327,18 +360,18 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
           index={3}
           icon={<Dna className="size-3.5" />}
           title="Type"
-          hint="Selecione até 2 tipos (Pokémon com todos os tipos escolhidos)."
+          hint="Até 2 tipos (Pokémon com ambos)."
           activeCount={filters.types.length}
         >
-          <div className="flex flex-wrap gap-1.5">
-            <motion.button
+          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
+              <motion.button
               type="button"
               layout
               whileTap={{ scale: 0.92 }}
               transition={chipSpring}
               onClick={() => onChange({ ...filters, types: [] })}
               className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                "col-span-3 w-full rounded-full px-2.5 py-1 text-xs font-medium transition-colors sm:col-span-4",
                 filters.types.length === 0
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "bg-muted/60 text-muted-foreground hover:bg-muted/80",
@@ -363,7 +396,7 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
                   disabled={isDisabled}
                   onClick={() => toggleType(type)}
                   className={cn(
-                    "rounded-full border px-2.5 py-1 text-xs font-medium capitalize transition-all",
+                    "w-full rounded-full border px-2 py-1 text-center text-xs font-medium capitalize transition-all",
                     isActive
                       ? "border-transparent text-white shadow-lg"
                       : "text-muted-foreground hover:brightness-110",
@@ -387,6 +420,7 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
             })}
           </div>
         </FilterSection>
+        </div>
       </div>
     </motion.aside>
   );

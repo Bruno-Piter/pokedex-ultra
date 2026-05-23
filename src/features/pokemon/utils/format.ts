@@ -193,21 +193,23 @@ export function sortPokemonByStatPriority(
   pokemon: Pokemon[],
   statPriority: StatFilterStat[],
   fallbackSort: PokemonSortOption,
-  direction: SortDirection = "asc",
+  statDirection: SortDirection = "asc",
+  fallbackDirection: SortDirection = "asc",
 ): Pokemon[] {
   if (statPriority.length === 0) {
-    return sortPokemon(pokemon, fallbackSort, direction);
+    return sortPokemon(pokemon, fallbackSort, fallbackDirection);
   }
 
-  const sign = sortSign(direction);
+  const statSign = sortSign(statDirection);
+  const fallbackSign = sortSign(fallbackDirection);
 
   return [...pokemon].sort((a, b) => {
     const diff =
-      sign *
+      statSign *
       (getPokemonStatAverage(a, statPriority) -
         getPokemonStatAverage(b, statPriority));
     if (diff !== 0) return diff;
-    return sign * comparePokemon(a, b, fallbackSort);
+    return fallbackSign * comparePokemon(a, b, fallbackSort);
   });
 }
 

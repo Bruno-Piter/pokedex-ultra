@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { PokemonCard } from "@/features/pokemon/components/pokemon-card";
-import { POKEMON_LIST_ROW_CLASS } from "@/features/pokemon/components/pokemon-list-row-layout";
+import {
+  POKEMON_LIST_MOBILE_MIN_WIDTH,
+  POKEMON_LIST_ROW_CLASS,
+} from "@/features/pokemon/components/pokemon-list-row-layout";
 import {
   PokemonGridSkeleton,
 } from "@/features/pokemon/components/pokemon-skeleton";
@@ -21,6 +24,7 @@ import {
   isStatColumnHighlighted,
   LIST_STAT_COLUMNS,
   LIST_STAT_LABELS,
+  STAT_COLORS,
 } from "@/features/pokemon/utils/stats-calculator";
 import type { StatFilterStat } from "@/features/pokemon/types";
 import { cn } from "@/lib/utils";
@@ -51,31 +55,55 @@ function filterAndSortCatalog(catalog: Pokemon[], filters: FilterState): Pokemon
     result,
     filters.statSort,
     filters.sort,
+    filters.statSortDirection,
     filters.sortDirection,
   );
 }
 
+function getStatHeaderColor(stat: (typeof LIST_STAT_COLUMNS)[number]): string {
+  if (stat === "bst") return STAT_COLORS.hp;
+  return STAT_COLORS[stat];
+}
+
 function PokemonListHeader({ statSort }: { statSort: StatFilterStat[] }) {
   return (
-    <div className="hidden overflow-hidden px-3 sm:block sm:px-4">
-      <div
-        className={`${POKEMON_LIST_ROW_CLASS} border-b border-border/50 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground`}
-      >
-        <span />
-        <span>Name</span>
-        <span>Type</span>
-        <span>Abilities</span>
-        {LIST_STAT_COLUMNS.map((stat) => (
-          <span
-            key={stat}
-            className={cn(
-              "text-center",
-              isStatColumnHighlighted(stat, statSort) && "text-destructive",
-            )}
-          >
-            {LIST_STAT_LABELS[stat]}
+    <div className="hidden sm:block">
+      <div className="glass-card rounded-xl border border-border/50 bg-card/50 px-3 py-2.5 shadow-sm backdrop-blur-sm sm:px-4">
+        <div className={POKEMON_LIST_ROW_CLASS}>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+            #
           </span>
-        ))}
+          <span className="text-xs font-semibold uppercase tracking-wide text-foreground/90">
+            Name
+          </span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-foreground/90">
+            Type
+          </span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-foreground/90">
+            Abilities
+          </span>
+          {LIST_STAT_COLUMNS.map((stat) => {
+            const color = getStatHeaderColor(stat);
+            const highlighted = isStatColumnHighlighted(stat, statSort);
+
+            return (
+              <span
+                key={stat}
+                className={cn(
+                  "flex h-7 min-w-0 items-center justify-center rounded-md px-0.5 text-[10px] font-bold tracking-wide sm:text-[11px]",
+                  highlighted &&
+                    "ring-1 ring-destructive sm:ring-2",
+                )}
+                style={{
+                  color,
+                  backgroundColor: `${color}22`,
+                }}
+              >
+                {LIST_STAT_LABELS[stat]}
+              </span>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -102,6 +130,7 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
     filters.statSort,
     filters.sort,
     filters.sortDirection,
+    filters.statSortDirection,
     filters.search,
   ]);
 
@@ -162,8 +191,14 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
         </p>
       ) : null}
 
-      <div className="overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] sm:overflow-x-visible [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-[680px] flex-col gap-2 sm:min-w-0">
+      <div className="min-w-0 w-full overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] lg:overflow-x-visible [&::-webkit-scrollbar]:hidden">
+        <div
+          className={cn(
+            "flex w-full flex-col gap-2",
+            POKEMON_LIST_MOBILE_MIN_WIDTH,
+            "lg:min-w-0",
+          )}
+        >
           <PokemonListHeader statSort={filters.statSort} />
 
           {visibleCatalog.map((pokemon, index) => (
