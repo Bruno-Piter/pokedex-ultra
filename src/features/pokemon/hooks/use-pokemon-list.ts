@@ -10,21 +10,21 @@ import {
 import type { Pokemon } from "@/features/pokemon/types";
 import {
   filterByGeneration,
-  filterByMinStat,
   sortPokemon,
 } from "@/features/pokemon/utils/format";
 import { pokeKeys, type PokemonListFilters } from "@/lib/pokeapi/query-keys";
 
 export function usePokemonList(
   filters: PokemonListFilters & { generation?: number | null },
+  options?: { enabled?: boolean },
 ) {
   return useInfiniteQuery({
     queryKey: pokeKeys.pokemon.list(filters),
+    enabled: options?.enabled ?? true,
     queryFn: async ({ pageParam = 0 }) => {
       const applyFilters = (batch: Pokemon[]) => {
         let pokemon = sortPokemon(batch, filters.sort);
         pokemon = filterByGeneration(pokemon, filters.generation ?? null);
-        pokemon = filterByMinStat(pokemon, filters.statMin ?? null);
         return pokemon;
       };
 

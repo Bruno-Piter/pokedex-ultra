@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { Filter, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -25,7 +24,7 @@ export type FilterState = {
   type: string | null;
   sort: PokemonSortOption;
   generation: number | null;
-  statMin: { stat: StatFilterStat; min: number } | null;
+  statSort: StatFilterStat[];
 };
 
 type SidebarProps = {
@@ -38,31 +37,28 @@ const SORT_OPTIONS: { value: PokemonSortOption; label: string }[] = [
   { value: "name", label: "Name" },
   { value: "weight", label: "Weight" },
   { value: "height", label: "Height" },
-  { value: "hp", label: "HP (high → low)" },
-  { value: "attack", label: "Attack (high → low)" },
-  { value: "defense", label: "Defense (high → low)" },
-  { value: "special-attack", label: "Sp. Attack (high → low)" },
-  { value: "special-defense", label: "Sp. Defense (high → low)" },
-  { value: "speed", label: "Speed (high → low)" },
-  { value: "bst", label: "Base Stat Total (high → low)" },
 ];
 
-const STAT_FILTER_OPTIONS: { value: StatFilterStat; label: string }[] = [
+const STAT_SORT_OPTIONS: { value: StatFilterStat; label: string }[] = [
   { value: "hp", label: STAT_LABELS.hp },
   { value: "attack", label: STAT_LABELS.attack },
   { value: "defense", label: STAT_LABELS.defense },
   { value: "special-attack", label: STAT_LABELS["special-attack"] },
   { value: "special-defense", label: STAT_LABELS["special-defense"] },
   { value: "speed", label: STAT_LABELS.speed },
-  { value: "bst", label: "Base Stat Total" },
+  { value: "bst", label: "BST" },
 ];
 
 export function Sidebar({ filters, onChange }: SidebarProps) {
   const reset = () =>
-    onChange({ type: null, sort: "id", generation: null, statMin: null });
+    onChange({ type: null, sort: "id", generation: null, statSort: [] });
 
-  const statFilterStat = filters.statMin?.stat ?? "hp";
-  const statFilterMin = filters.statMin?.min ?? 0;
+  const toggleStatSort = (stat: StatFilterStat) => {
+    const next = filters.statSort.includes(stat)
+      ? filters.statSort.filter((s) => s !== stat)
+      : [...filters.statSort, stat];
+    onChange({ ...filters, statSort: next });
+  };
 
   return (
     <motion.aside
@@ -110,6 +106,38 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
 
         <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground">
+            Sort by stats
+          </label>
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            Clique para ordenar. Múltiplos stats = ordena pela média dos valores selecionados.
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {STAT_SORT_OPTIONS.map((opt) => {
+              const isActive = filters.statSort.includes(opt.value);
+
+              return (
+                <motion.button
+                  key={opt.value}
+                  type="button"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => toggleStatSort(opt.value)}
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted",
+                  )}
+                >
+                  {opt.label}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">
             Generation
           </label>
           <Select
@@ -134,49 +162,6 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">
-            Min base stat
-          </label>
-          <Select
-            value={statFilterStat}
-            onValueChange={(v) => {
-              if (!v) return;
-              const stat = v as StatFilterStat;
-              onChange({
-                ...filters,
-                statMin: statFilterMin > 0 ? { stat, min: statFilterMin } : null,
-              });
-            }}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STAT_FILTER_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            type="number"
-            min={0}
-            max={999}
-            placeholder="Min value (0 = off)"
-            value={statFilterMin || ""}
-            onChange={(e) => {
-              const min = Number(e.target.value) || 0;
-              onChange({
-                ...filters,
-                statMin:
-                  min > 0 ? { stat: statFilterStat, min } : null,
-              });
-            }}
-          />
         </div>
 
         <div className="space-y-2">
