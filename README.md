@@ -4,6 +4,16 @@ Pokédex web focada em **profundidade de dados** e **ferramentas de análise** �
 
 Dados via [PokéAPI](https://pokeapi.co/).
 
+## Preview
+
+**Catálogo com filtros avançados** — stats, BST, tipos e habilidades visíveis na lista; filtros por geração, tipo e ordenação por stats.
+
+![Catálogo com filtros por tipo Dragon, stats e habilidades na lista](docs/screenshots/catalogo-filtros.png)
+
+**Página de detalhe** — radar, barras de base stats e faixas min/máx por nível com naturezas.
+
+![Página de detalhe do Garchomp com radar, barras e tabela de stats por nível](docs/screenshots/detalhe-stats.png)
+
 ## Por que é mais completa
 
 A maioria das Pokédex para por nome, sprite e tipos. Aqui o catálogo funciona como uma **ferramenta de consulta**:
