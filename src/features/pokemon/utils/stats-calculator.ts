@@ -23,6 +23,15 @@ export const STAT_LABELS: Record<StatName, string> = {
   speed: "Speed",
 };
 
+export const STAT_SHORT_LABELS: Record<StatName, string> = {
+  hp: "HP",
+  attack: "Atk",
+  defense: "Def",
+  "special-attack": "SpA",
+  "special-defense": "SpD",
+  speed: "Spe",
+};
+
 export const STAT_COLORS: Record<StatName, string> = {
   hp: "#FF5959",
   attack: "#F5AC78",
