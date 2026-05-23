@@ -29,12 +29,19 @@ export function usePokemonList(
           filters.sortDirection ?? "asc",
         );
         pokemon = filterByGeneration(pokemon, filters.generation ?? null);
+        if (filters.types?.length) {
+          pokemon = pokemon.filter((p) =>
+            filters.types!.every((t) =>
+              p.types.some((entry) => entry.type.name === t),
+            ),
+          );
+        }
         return pokemon;
       };
 
-      if (filters.type) {
+      if (filters.types?.length === 1) {
         const { pokemon, total } = await fetchPokemonByType(
-          filters.type,
+          filters.types[0],
           pageParam,
           PAGE_SIZE,
         );

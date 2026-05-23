@@ -1,7 +1,7 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
 import { DexSearch } from "@/components/layout/dex-search";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { ArtworkToggle } from "@/components/layout/artwork-toggle";
@@ -21,11 +21,18 @@ export function Header({ search, onSearchChange }: HeaderProps) {
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
         <div className="flex shrink-0 items-center gap-3">
           <motion.div
-            whileHover={{ rotate: 180, scale: 1.1 }}
+            whileHover={{ rotate: 12, scale: 1.08 }}
             transition={{ type: "spring", stiffness: 260 }}
-            className="flex size-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20"
+            className="relative size-10 overflow-hidden rounded-xl ring-1 ring-border/50"
           >
-            <Sparkles className="size-5 text-primary" />
+            <Image
+              src="/icon.png"
+              alt="Pokédex Ultra"
+              fill
+              sizes="40px"
+              className="object-cover"
+              priority
+            />
           </motion.div>
           <div>
             <h1 className="font-heading text-lg font-bold tracking-tight sm:text-xl">

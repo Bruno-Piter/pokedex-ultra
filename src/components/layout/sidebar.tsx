@@ -1,8 +1,22 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { ArrowDown, ArrowUp, Filter, RotateCcw } from "lucide-react";
+import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Dna,
+  Layers,
+  RotateCcw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FilterSection } from "@/components/layout/filter-section";
+import {
+  countActiveFilters,
+  hasActiveFilters,
+  type FilterState,
+} from "@/components/layout/filter-utils";
 import {
   Select,
   SelectContent,
@@ -10,13 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import type {
   PokemonSortOption,
-  SortDirection,
   StatFilterStat,
 } from "@/features/pokemon/types";
-import { STAT_LABELS } from "@/features/pokemon/utils/stats-calculator";
+import {
+  STAT_COLORS,
+  STAT_LABELS,
+} from "@/features/pokemon/utils/stats-calculator";
 import {
   GENERATION_RANGES,
   POKEMON_TYPES,
@@ -24,16 +39,8 @@ import {
 } from "@/features/pokemon/utils/format";
 import { cn } from "@/lib/utils";
 
-export type { SortDirection };
-
-export type FilterState = {
-  type: string | null;
-  sort: PokemonSortOption;
-  sortDirection: SortDirection;
-  generation: number | null;
-  statSort: StatFilterStat[];
-  search: string;
-};
+export type { FilterState } from "@/components/layout/filter-utils";
+export type { SortDirection } from "@/features/pokemon/types";
 
 type SidebarProps = {
   filters: FilterState;
@@ -57,10 +64,30 @@ const STAT_SORT_OPTIONS: { value: StatFilterStat; label: string }[] = [
   { value: "bst", label: "BST" },
 ];
 
+const chipSpring = { type: "spring" as const, stiffness: 400, damping: 28 };
+
+function getStatChipColor(stat: StatFilterStat): string | undefined {
+  if (stat === "bst") return "#FF5959";
+  return STAT_COLORS[stat];
+}
+
 export function Sidebar({ filters, onChange }: SidebarProps) {
+  const activeTotal = countActiveFilters(filters);
+  const filtersActive = hasActiveFilters(filters);
+
+  const toggleType = (type: string) => {
+    const selected = filters.types;
+    if (selected.includes(type)) {
+      onChange({ ...filters, types: selected.filter((t) => t !== type) });
+      return;
+    }
+    if (selected.length >= 2) return;
+    onChange({ ...filters, types: [...selected, type] });
+  };
+
   const reset = () =>
     onChange({
-      type: null,
+      types: [],
       sort: "id",
       sortDirection: "asc",
       generation: null,
@@ -75,30 +102,77 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
     onChange({ ...filters, statSort: next });
   };
 
+  const sortSectionActive =
+    (filters.sort !== "id" ? 1 : 0) + (filters.sortDirection !== "asc" ? 1 : 0);
+
   return (
     <motion.aside
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="w-full shrink-0 lg:w-64"
+      className="sticky top-20 z-30 w-full max-h-[calc(100vh-5.5rem)] shrink-0 self-start overflow-y-auto overscroll-contain lg:w-72"
     >
-      <div className="glass-card sticky top-20 space-y-5 rounded-2xl p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Filter className="size-4" />
-            Filters
+      <div className="filter-card-accent glass-card space-y-4 rounded-2xl p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="relative size-8 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/50">
+              <Image
+                src="/icon.png"
+                alt=""
+                fill
+                sizes="32px"
+                className="object-cover"
+              />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold">Filtros</h2>
+              <AnimatePresence mode="wait">
+                {filtersActive ? (
+                  <motion.p
+                    key="active"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="text-[10px] text-muted-foreground"
+                  >
+                    {activeTotal} filtro{activeTotal === 1 ? "" : "s"} ativo
+                    {activeTotal === 1 ? "" : "s"}
+                  </motion.p>
+                ) : (
+                  <motion.p
+                    key="idle"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="text-[10px] text-muted-foreground"
+                  >
+                    Nenhum filtro aplicado
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={reset} className="h-8 gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={reset}
+            disabled={!filtersActive}
+            className={cn(
+              "h-8 gap-1 transition-colors",
+              filtersActive &&
+                "border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive",
+            )}
+          >
             <RotateCcw className="size-3" />
             Clear
           </Button>
         </div>
 
-        <Separator />
-
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">
-            Sort by
-          </label>
+        <FilterSection
+          index={0}
+          icon={<ArrowUpDown className="size-3.5" />}
+          title="Sort by"
+          activeCount={sortSectionActive}
+        >
           <div className="flex gap-2">
             <div className="min-w-0 flex-1">
               <Select
@@ -108,7 +182,7 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
                   onChange({ ...filters, sort: v as PokemonSortOption });
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-background/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -124,7 +198,11 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
               type="button"
               variant="outline"
               size="icon"
-              className="shrink-0"
+              className={cn(
+                "shrink-0 transition-colors",
+                filters.sortDirection === "desc" &&
+                  "border-primary/40 bg-primary/15 ring-1 ring-primary/30",
+              )}
               aria-label={
                 filters.sortDirection === "asc"
                   ? "Ordenar do menor para o maior"
@@ -150,31 +228,38 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
               )}
             </Button>
           </div>
-        </div>
+        </FilterSection>
 
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">
-            Generation
-          </label>
+        <FilterSection
+          index={1}
+          icon={<Layers className="size-3.5" />}
+          title="Generation"
+          activeCount={filters.generation ? 1 : 0}
+        >
           <div className="flex flex-wrap gap-1.5">
-            <button
+            <motion.button
               type="button"
+              layout
+              whileTap={{ scale: 0.92 }}
+              transition={chipSpring}
               onClick={() => onChange({ ...filters, generation: null })}
               className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
+                "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                 !filters.generation
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80",
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted",
               )}
             >
               All
-            </button>
+            </motion.button>
             {GENERATION_RANGES.map((g) => (
               <motion.button
                 key={g.gen}
                 type="button"
+                layout
                 whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.92 }}
+                transition={chipSpring}
                 onClick={() =>
                   onChange({
                     ...filters,
@@ -182,7 +267,7 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
                   })
                 }
                 className={cn(
-                  "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
+                  "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                   filters.generation === g.gen
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-muted/60 text-muted-foreground hover:bg-muted",
@@ -193,89 +278,115 @@ export function Sidebar({ filters, onChange }: SidebarProps) {
               </motion.button>
             ))}
           </div>
-        </div>
+        </FilterSection>
 
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">
-            Sort by stats
-          </label>
-          <p className="text-[11px] leading-snug text-muted-foreground">
-            Clique para ordenar. Múltiplos stats = ordena pela média dos valores selecionados.
-          </p>
+        <FilterSection
+          index={2}
+          icon={<ArrowUpDown className="size-3.5" />}
+          title="Sort by stats"
+          hint="Clique para ordenar. Múltiplos stats = média dos valores selecionados."
+          activeCount={filters.statSort.length}
+        >
           <div className="flex flex-wrap gap-1.5">
             {STAT_SORT_OPTIONS.map((opt) => {
               const isActive = filters.statSort.includes(opt.value);
+              const color = getStatChipColor(opt.value);
 
               return (
                 <motion.button
                   key={opt.value}
                   type="button"
+                  layout
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.92 }}
+                  transition={chipSpring}
                   onClick={() => toggleStatSort(opt.value)}
                   className={cn(
                     "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-sm"
+                      ? "text-white shadow-md"
                       : "bg-muted/60 text-muted-foreground hover:bg-muted",
                   )}
+                  style={
+                    isActive
+                      ? {
+                          backgroundColor: color,
+                          boxShadow: `0 4px 14px ${color}55`,
+                        }
+                      : undefined
+                  }
                 >
                   {opt.label}
                 </motion.button>
               );
             })}
           </div>
-        </div>
+        </FilterSection>
 
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">
-            Type
-          </label>
+        <FilterSection
+          index={3}
+          icon={<Dna className="size-3.5" />}
+          title="Type"
+          hint="Selecione até 2 tipos (Pokémon com todos os tipos escolhidos)."
+          activeCount={filters.types.length}
+        >
           <div className="flex flex-wrap gap-1.5">
-            <button
+            <motion.button
               type="button"
-              onClick={() => onChange({ ...filters, type: null })}
+              layout
+              whileTap={{ scale: 0.92 }}
+              transition={chipSpring}
+              onClick={() => onChange({ ...filters, types: [] })}
               className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
-                !filters.type
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80",
+                "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                filters.types.length === 0
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted/80",
               )}
             >
               All
-            </button>
-            {POKEMON_TYPES.map((type) => (
-              <motion.button
-                key={type}
-                type="button"
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() =>
-                  onChange({
-                    ...filters,
-                    type: filters.type === type ? null : type,
-                  })
-                }
-                className={cn(
-                  "rounded-full px-2.5 py-1 text-xs font-medium capitalize transition-all",
-                  filters.type === type
-                    ? "text-white shadow-lg"
-                    : "bg-muted/60 text-muted-foreground hover:bg-muted",
-                )}
-                style={
-                  filters.type === type
-                    ? {
-                        backgroundColor: getTypeColor(type),
-                        boxShadow: `0 4px 14px ${getTypeColor(type)}55`,
-                      }
-                    : undefined
-                }
-              >
-                {type}
-              </motion.button>
-            ))}
+            </motion.button>
+            {POKEMON_TYPES.map((type) => {
+              const typeColor = getTypeColor(type);
+              const isActive = filters.types.includes(type);
+              const isDisabled =
+                !isActive && filters.types.length >= 2;
+
+              return (
+                <motion.button
+                  key={type}
+                  type="button"
+                  layout
+                  whileHover={isDisabled ? undefined : { scale: 1.06 }}
+                  whileTap={isDisabled ? undefined : { scale: 0.92 }}
+                  transition={chipSpring}
+                  disabled={isDisabled}
+                  onClick={() => toggleType(type)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-xs font-medium capitalize transition-all",
+                    isActive
+                      ? "border-transparent text-white shadow-lg"
+                      : "text-muted-foreground hover:brightness-110",
+                    isDisabled && "cursor-not-allowed opacity-40",
+                  )}
+                  style={
+                    isActive
+                      ? {
+                          backgroundColor: typeColor,
+                          boxShadow: `0 4px 14px ${typeColor}55`,
+                        }
+                      : {
+                          borderColor: `${typeColor}44`,
+                          backgroundColor: `${typeColor}18`,
+                        }
+                  }
+                >
+                  {type}
+                </motion.button>
+              );
+            })}
           </div>
-        </div>
+        </FilterSection>
       </div>
     </motion.aside>
   );

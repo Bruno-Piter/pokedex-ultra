@@ -46,7 +46,7 @@ import type {
 } from "@/features/pokemon/types";
 
 export type PokemonListFilters = {
-  type?: string;
+  types?: string[];
   sort: PokemonSortOption;
   sortDirection?: SortDirection;
   search?: string;

@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: "Pokédex Ultra",
   description:
     "A modern Pokédex powered by PokéAPI — explore Pokémon, stats, evolutions, and more.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
