@@ -39,11 +39,16 @@ export const pokeKeys = {
   },
 };
 
-import type { PokemonSortOption, StatFilterStat } from "@/features/pokemon/types";
+import type {
+  PokemonSortOption,
+  SortDirection,
+  StatFilterStat,
+} from "@/features/pokemon/types";
 
 export type PokemonListFilters = {
   type?: string;
   sort: PokemonSortOption;
+  sortDirection?: SortDirection;
   search?: string;
   statSort?: StatFilterStat[];
 };

@@ -3,6 +3,7 @@ import type {
   LocalizedName,
   Pokemon,
   PokemonSortOption,
+  SortDirection,
   StatFilterStat,
 } from "@/features/pokemon/types";
 
@@ -157,9 +158,9 @@ function comparePokemon(
     case "name":
       return a.name.localeCompare(b.name);
     case "weight":
-      return b.weight - a.weight;
+      return a.weight - b.weight;
     case "height":
-      return b.height - a.height;
+      return a.height - b.height;
     case "hp":
     case "attack":
     case "defense":
@@ -167,34 +168,46 @@ function comparePokemon(
     case "special-defense":
     case "speed":
     case "bst":
-      return getPokemonStatValue(b, sort) - getPokemonStatValue(a, sort);
+      return getPokemonStatValue(a, sort) - getPokemonStatValue(b, sort);
     default:
       return a.id - b.id;
   }
 }
 
+function sortSign(direction: SortDirection): number {
+  return direction === "asc" ? 1 : -1;
+}
+
 export function sortPokemon(
   pokemon: Pokemon[],
   sort: PokemonSortOption,
+  direction: SortDirection = "asc",
 ): Pokemon[] {
-  return [...pokemon].sort((a, b) => comparePokemon(a, b, sort));
+  const sign = sortSign(direction);
+  return [...pokemon].sort(
+    (a, b) => sign * comparePokemon(a, b, sort),
+  );
 }
 
 export function sortPokemonByStatPriority(
   pokemon: Pokemon[],
   statPriority: StatFilterStat[],
   fallbackSort: PokemonSortOption,
+  direction: SortDirection = "asc",
 ): Pokemon[] {
   if (statPriority.length === 0) {
-    return sortPokemon(pokemon, fallbackSort);
+    return sortPokemon(pokemon, fallbackSort, direction);
   }
+
+  const sign = sortSign(direction);
 
   return [...pokemon].sort((a, b) => {
     const diff =
-      getPokemonStatAverage(b, statPriority) -
-      getPokemonStatAverage(a, statPriority);
+      sign *
+      (getPokemonStatAverage(a, statPriority) -
+        getPokemonStatAverage(b, statPriority));
     if (diff !== 0) return diff;
-    return comparePokemon(a, b, fallbackSort);
+    return sign * comparePokemon(a, b, fallbackSort);
   });
 }
 

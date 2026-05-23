@@ -20,7 +20,7 @@ export function PokemonCardSkeleton() {
             <Skeleton className="h-4 w-full max-w-[120px]" />
             <Skeleton className="h-4 w-full max-w-[100px]" />
           </div>
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 7 }).map((_, i) => (
             <Skeleton key={i} className="mx-auto h-4 w-6" />
           ))}
         </div>

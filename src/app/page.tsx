@@ -13,6 +13,7 @@ export default function HomePage() {
   const [filters, setFilters] = useState<FilterState>({
     type: null,
     sort: "id",
+    sortDirection: "asc",
     generation: null,
     statSort: [],
     search: "",

@@ -146,6 +146,8 @@ export type PokemonSortOption =
   | "speed"
   | "bst";
 
+export type SortDirection = "asc" | "desc";
+
 export type StatFilterStat = StatName | "bst";
 
 export type ChainLink = {

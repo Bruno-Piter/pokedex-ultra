@@ -17,7 +17,13 @@ import {
   matchesPokemonSearch,
   sortPokemonByStatPriority,
 } from "@/features/pokemon/utils/format";
-import { STAT_ORDER, STAT_SHORT_LABELS } from "@/features/pokemon/utils/stats-calculator";
+import {
+  isStatColumnHighlighted,
+  LIST_STAT_COLUMNS,
+  LIST_STAT_LABELS,
+} from "@/features/pokemon/utils/stats-calculator";
+import type { StatFilterStat } from "@/features/pokemon/types";
+import { cn } from "@/lib/utils";
 
 type PokemonGridProps = {
   filters: FilterState;
@@ -39,10 +45,15 @@ function filterAndSortCatalog(catalog: Pokemon[], filters: FilterState): Pokemon
   }
 
   result = filterByGeneration(result, filters.generation);
-  return sortPokemonByStatPriority(result, filters.statSort, filters.sort);
+  return sortPokemonByStatPriority(
+    result,
+    filters.statSort,
+    filters.sort,
+    filters.sortDirection,
+  );
 }
 
-function PokemonListHeader() {
+function PokemonListHeader({ statSort }: { statSort: StatFilterStat[] }) {
   return (
     <div className="hidden overflow-hidden px-3 sm:block sm:px-4">
       <div
@@ -52,9 +63,15 @@ function PokemonListHeader() {
         <span>Name</span>
         <span>Type</span>
         <span>Abilities</span>
-        {STAT_ORDER.map((stat) => (
-          <span key={stat} className="text-center">
-            {STAT_SHORT_LABELS[stat]}
+        {LIST_STAT_COLUMNS.map((stat) => (
+          <span
+            key={stat}
+            className={cn(
+              "text-center",
+              isStatColumnHighlighted(stat, statSort) && "text-destructive",
+            )}
+          >
+            {LIST_STAT_LABELS[stat]}
           </span>
         ))}
       </div>
@@ -77,7 +94,14 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [filters.type, filters.generation, filters.statSort, filters.sort, filters.search]);
+  }, [
+    filters.type,
+    filters.generation,
+    filters.statSort,
+    filters.sort,
+    filters.sortDirection,
+    filters.search,
+  ]);
 
   useEffect(() => {
     const el = loadMoreRef.current;
@@ -137,11 +161,16 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
       ) : null}
 
       <div className="overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] sm:overflow-x-visible [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-[640px] flex-col gap-2 sm:min-w-0">
-          <PokemonListHeader />
+        <div className="flex min-w-[680px] flex-col gap-2 sm:min-w-0">
+          <PokemonListHeader statSort={filters.statSort} />
 
           {visibleCatalog.map((pokemon, index) => (
-            <PokemonCard key={pokemon.id} pokemon={pokemon} index={index} />
+            <PokemonCard
+              key={pokemon.id}
+              pokemon={pokemon}
+              index={index}
+              statSort={filters.statSort}
+            />
           ))}
         </div>
       </div>
