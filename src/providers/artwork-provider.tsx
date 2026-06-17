@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -30,13 +29,8 @@ function readStoredMode(): ArtworkMode {
 }
 
 export function ArtworkProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ArtworkMode>("official");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setModeState(readStoredMode());
-    setMounted(true);
-  }, []);
+  const [mode, setModeState] = useState<ArtworkMode>(() => readStoredMode());
+  const mounted = typeof window !== "undefined";
 
   const setMode = useCallback((next: ArtworkMode) => {
     setModeState(next);

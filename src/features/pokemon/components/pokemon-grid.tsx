@@ -112,27 +112,44 @@ function PokemonListHeader({ statSort }: { statSort: StatFilterStat[] }) {
 export function PokemonGrid({ filters }: PokemonGridProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const catalogQuery = usePokemonCatalog();
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const sortedCatalog = useMemo(() => {
     if (!catalogQuery.data) return [];
     return filterAndSortCatalog(catalogQuery.data, filters);
   }, [catalogQuery.data, filters]);
 
+  const filterKey = useMemo(
+    () =>
+      [
+        filters.types.join(","),
+        filters.generation,
+        filters.statSort,
+        filters.sort,
+        filters.sortDirection,
+        filters.statSortDirection,
+        filters.search,
+      ].join("|"),
+    [
+      filters.types,
+      filters.generation,
+      filters.statSort,
+      filters.sort,
+      filters.sortDirection,
+      filters.statSortDirection,
+      filters.search,
+    ],
+  );
+
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+
+  if (filterKey !== lastFilterKey) {
+    setLastFilterKey(filterKey);
+    setVisibleCount(PAGE_SIZE);
+  }
+
   const visibleCatalog = sortedCatalog.slice(0, visibleCount);
   const hasMoreCatalog = visibleCount < sortedCatalog.length;
-
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [
-    filters.types,
-    filters.generation,
-    filters.statSort,
-    filters.sort,
-    filters.sortDirection,
-    filters.statSortDirection,
-    filters.search,
-  ]);
 
   useEffect(() => {
     const el = loadMoreRef.current;
