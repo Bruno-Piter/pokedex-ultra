@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image, { type ImageProps } from "next/image";
 import type { Pokemon } from "@/features/pokemon/types";
 import {
@@ -26,11 +26,16 @@ export function PokemonSpriteImage({
   const variant: SpriteVariant = mode === "pixel" ? "pixel" : "artwork";
   const preferred = getPokemonSprite(pokemon, variant);
   const fallback = getOfficialArtwork(pokemon);
-  const [src, setSrc] = useState(preferred ?? fallback);
+  const initialSrc = preferred ?? fallback;
+  const [failedPreferred, setFailedPreferred] = useState<string | null>(null);
+  const [lastPreferred, setLastPreferred] = useState(initialSrc);
 
-  useEffect(() => {
-    setSrc(preferred ?? fallback);
-  }, [preferred, fallback]);
+  if (initialSrc !== lastPreferred) {
+    setLastPreferred(initialSrc);
+    setFailedPreferred(null);
+  }
+
+  const src = failedPreferred === initialSrc ? fallback : initialSrc;
 
   if (!src) {
     return (
@@ -56,7 +61,7 @@ export function PokemonSpriteImage({
       )}
       onError={() => {
         if (fallback && src !== fallback) {
-          setSrc(fallback);
+          setFailedPreferred(initialSrc);
         }
       }}
     />

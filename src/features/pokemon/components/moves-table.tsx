@@ -1,6 +1,5 @@
 "use client";
 
-import { Fragment } from "react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TypeBadge } from "@/features/pokemon/components/type-badge";
