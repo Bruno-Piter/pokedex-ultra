@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Search, Swords, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ type MoveSearchPanelProps = {
 };
 
 const SLOT_LABELS = ["Ataque 1", "Ataque 2", "Ataque 3", "Ataque 4"] as const;
+const MENU_MAX_HEIGHT = 224;
 
 function formatMoveName(name: string): string {
   return name
@@ -25,12 +27,23 @@ function formatMoveName(name: string): string {
     .join(" ");
 }
 
+function moveNameFromEntry(entry: string | { move: { name: string } }): string {
+  return typeof entry === "string" ? entry : entry.move.name;
+}
+
 type MoveSlotSelectProps = {
   index: number;
   value: string | null;
   moves: MoveFilterSlots;
   allMoves: string[];
   onSelect: (move: string | null) => void;
+};
+
+type MenuBox = {
+  top: number;
+  left: number;
+  width: number;
+  maxHeight: number;
 };
 
 function MoveSlotSelect({
@@ -42,7 +55,10 @@ function MoveSlotSelect({
 }: MoveSlotSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [menuBox, setMenuBox] = useState<MenuBox | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const takenElsewhere = useMemo(() => {
     const taken = new Set<string>();
@@ -63,13 +79,51 @@ function MoveSlotSelect({
     return list.slice(0, 80);
   }, [allMoves, query]);
 
+  const updateMenuPosition = () => {
+    const input = inputRef.current;
+    if (!input) return;
+    const rect = input.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    const openUpward = spaceBelow < 160 && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(
+      120,
+      Math.min(MENU_MAX_HEIGHT, openUpward ? spaceAbove : spaceBelow),
+    );
+    const top = openUpward
+      ? Math.max(8, rect.top - maxHeight - 4)
+      : rect.bottom + 4;
+
+    setMenuBox({
+      top,
+      left: rect.left,
+      width: rect.width,
+      maxHeight,
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuBox(null);
+      return;
+    }
+    updateMenuPosition();
+  }, [open, filtered.length]);
+
   useEffect(() => {
     if (!open) return;
+
+    const onReposition = () => updateMenuPosition();
     const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-        setQuery("");
+      const target = event.target as Node;
+      if (
+        rootRef.current?.contains(target) ||
+        menuRef.current?.contains(target)
+      ) {
+        return;
       }
+      setOpen(false);
+      setQuery("");
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -77,13 +131,75 @@ function MoveSlotSelect({
         setQuery("");
       }
     };
+
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
     return () => {
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
+
+  const menu =
+    open && menuBox && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            ref={menuRef}
+            id={`move-slot-list-${index}`}
+            role="listbox"
+            style={{
+              position: "fixed",
+              top: menuBox.top,
+              left: menuBox.left,
+              width: menuBox.width,
+              maxHeight: menuBox.maxHeight,
+              zIndex: 100,
+            }}
+            className="z-[100] overflow-y-auto rounded-xl border border-border/60 bg-popover p-1 shadow-lg"
+          >
+            {filtered.length === 0 ? (
+              <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+                Nenhum ataque encontrado
+              </p>
+            ) : (
+              filtered.map((move) => {
+                const disabled = takenElsewhere.has(move);
+                const selected = value === move;
+                return (
+                  <button
+                    key={move}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    disabled={disabled}
+                    className={cn(
+                      "flex w-full items-center rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
+                      selected
+                        ? "bg-primary/15 font-medium text-primary"
+                        : "hover:bg-muted",
+                      disabled &&
+                        "cursor-not-allowed opacity-40 hover:bg-transparent",
+                    )}
+                    onClick={() => {
+                      if (disabled) return;
+                      onSelect(move);
+                      setOpen(false);
+                      setQuery("");
+                    }}
+                  >
+                    {formatMoveName(move)}
+                  </button>
+                );
+              })
+            )}
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div
@@ -114,6 +230,7 @@ function MoveSlotSelect({
       <div className="relative">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground/70" />
         <input
+          ref={inputRef}
           type="text"
           value={open ? query : value ? formatMoveName(value) : ""}
           placeholder="Buscar ataque..."
@@ -135,50 +252,7 @@ function MoveSlotSelect({
           role="combobox"
         />
       </div>
-
-      {open ? (
-        <div
-          id={`move-slot-list-${index}`}
-          role="listbox"
-          className="absolute inset-x-0 top-full z-40 mt-1 max-h-56 overflow-y-auto rounded-xl border border-border/60 bg-popover p-1 shadow-lg"
-        >
-          {filtered.length === 0 ? (
-            <p className="px-2 py-4 text-center text-sm text-muted-foreground">
-              Nenhum ataque encontrado
-            </p>
-          ) : (
-            filtered.map((move) => {
-              const disabled = takenElsewhere.has(move);
-              const selected = value === move;
-              return (
-                <button
-                  key={move}
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  disabled={disabled}
-                  className={cn(
-                    "flex w-full items-center rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
-                    selected
-                      ? "bg-primary/15 font-medium text-primary"
-                      : "hover:bg-muted",
-                    disabled &&
-                      "cursor-not-allowed opacity-40 hover:bg-transparent",
-                  )}
-                  onClick={() => {
-                    if (disabled) return;
-                    onSelect(move);
-                    setOpen(false);
-                    setQuery("");
-                  }}
-                >
-                  {formatMoveName(move)}
-                </button>
-              );
-            })
-          )}
-        </div>
-      ) : null}
+      {menu}
     </div>
   );
 }
@@ -191,7 +265,7 @@ export function MoveSearchPanel({ moves, onChange }: MoveSearchPanelProps) {
     const names = new Set<string>();
     for (const pokemon of catalogQuery.data ?? []) {
       for (const entry of pokemon.moves) {
-        names.add(entry.move.name);
+        names.add(moveNameFromEntry(entry));
       }
     }
     return Array.from(names).sort((a, b) => a.localeCompare(b));

@@ -122,7 +122,7 @@
     @apply border-border outline-ring/50;
   }
   html {
-    @apply font-sans;
+    @apply bg-background font-sans;
     overscroll-behavior-y: none;
   }
   body {
@@ -133,6 +133,10 @@
   html.standalone body {
     min-height: 100dvh;
     height: 100%;
+    background-color: var(--background);
+  }
+  html.standalone header {
+    background-color: color-mix(in oklab, var(--background) 92%, transparent);
   }
 }
 
@@ -215,6 +219,7 @@
   html,
   body {
     min-height: 100dvh;
+    background-color: var(--background);
     overscroll-behavior-y: none;
   }
 }

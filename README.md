@@ -63,6 +63,17 @@ npm run icons   # regenerar favicon e icones PWA a partir de scripts/source-icon
 ```
 
 
+## Catalogo e performance
+
+Full catalog is no longer built in the browser via thousands of PokeAPI calls.
+
+- build writes public/data/catalog.json slim payload
+- client fetches static JSON; fallback GET /api/catalog with 24h cache
+- TanStack Query cache persists to IndexedDB for instant repeat visits
+- regenerate via catalog build script
+
+First Vercel build talks to PokeAPI about 1-3 min. Later loads are one JSON.
+
 ## Progressive Web App
 
 Producao usa Serwist para cache do shell/assets. Em desenvolvimento o worker fica desligado.

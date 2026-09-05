@@ -36,10 +36,8 @@ function pokemonStub(partial: {
     weight: 100,
     base_experience: 64,
     order: partial.id,
-    is_default: true,
     sprites: {
       front_default: null,
-      front_shiny: null,
       other: {},
       versions: {},
     },

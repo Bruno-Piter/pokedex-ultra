@@ -40,7 +40,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#161616",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#161616" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -56,10 +59,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full overscroll-none antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full bg-background overscroll-none antialiased dark`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col font-sans overscroll-none">
+      <body className="flex min-h-full flex-col bg-background font-sans overscroll-none">
         <PwaProvider>
           <ThemeProvider>
             <ArtworkProvider>
