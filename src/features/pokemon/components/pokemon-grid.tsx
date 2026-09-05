@@ -37,7 +37,7 @@ function PokemonListHeader({ statSort }: { statSort: StatFilterStat[] }) {
   return (
     <div className="hidden md:block">
       <div className="glass-card rounded-xl border border-border/50 bg-card/50 px-3 py-2.5 shadow-sm backdrop-blur-sm sm:px-4">
-        <div className={POKEMON_LIST_ROW_CLASS}>
+        <div className={cn(POKEMON_LIST_ROW_CLASS, "grid")}>
           <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
             #
           </span>

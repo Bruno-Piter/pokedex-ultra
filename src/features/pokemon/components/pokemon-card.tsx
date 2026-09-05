@@ -79,7 +79,7 @@ export function PokemonCard({ pokemon, index = 0, statSort = [] }: PokemonCardPr
             </div>
 
             {/* Desktop / md+: full stats table row */}
-            <div className={cn("hidden md:grid", POKEMON_LIST_ROW_CLASS)}>
+            <div className={cn(POKEMON_LIST_ROW_CLASS, "hidden md:grid")}>
               <div className="relative size-[72px] shrink-0">
                 <PokemonSpriteImage
                   pokemon={pokemon}
