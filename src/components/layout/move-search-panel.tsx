@@ -2,11 +2,9 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Search, Swords, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  EMPTY_MOVE_FILTERS,
-  getSelectedMoves,
   type MoveFilterSlots,
 } from "@/components/layout/filter-utils";
 import { usePokemonCatalog } from "@/features/pokemon/hooks/use-pokemon-catalog";
@@ -20,7 +18,7 @@ type MoveSearchPanelProps = {
 const SLOT_LABELS = ["Ataque 1", "Ataque 2", "Ataque 3", "Ataque 4"] as const;
 const MENU_MAX_HEIGHT = 224;
 
-function formatMoveName(name: string): string {
+export function formatMoveName(name: string): string {
   return name
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -127,6 +125,8 @@ function MoveSlotSelect({
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.stopPropagation();
+        event.preventDefault();
         setOpen(false);
         setQuery("");
       }
@@ -157,9 +157,9 @@ function MoveSlotSelect({
               left: menuBox.left,
               width: menuBox.width,
               maxHeight: menuBox.maxHeight,
-              zIndex: 100,
+              zIndex: 110,
             }}
-            className="z-[100] overflow-y-auto rounded-xl border border-border/60 bg-popover p-1 shadow-lg"
+            className="z-[110] overflow-y-auto rounded-xl border border-border/60 bg-popover p-1 shadow-lg"
           >
             {filtered.length === 0 ? (
               <p className="px-2 py-4 text-center text-sm text-muted-foreground">
@@ -257,9 +257,9 @@ function MoveSlotSelect({
   );
 }
 
+/** Four searchable attack slots — intended for the filter modal. */
 export function MoveSearchPanel({ moves, onChange }: MoveSearchPanelProps) {
   const catalogQuery = usePokemonCatalog();
-  const selectedCount = getSelectedMoves(moves).length;
 
   const allMoves = useMemo(() => {
     const names = new Set<string>();
@@ -277,51 +277,18 @@ export function MoveSearchPanel({ moves, onChange }: MoveSearchPanelProps) {
     onChange(next);
   };
 
-  const clearAll = () => onChange(EMPTY_MOVE_FILTERS);
-
   return (
-    <section className="mb-4 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
-            <Swords className="size-4" />
-          </span>
-          <div>
-            <h2 className="text-sm font-semibold">Busca avançada por ataques</h2>
-            <p className="text-[11px] text-muted-foreground">
-              Pokémon que conhecem todos os ataques selecionados (AND)
-            </p>
-          </div>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={selectedCount === 0}
-          onClick={clearAll}
-          className={cn(
-            "h-9 gap-1",
-            selectedCount > 0 &&
-              "border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive",
-          )}
-        >
-          <X className="size-3.5" />
-          Limpar ataques
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {SLOT_LABELS.map((_, index) => (
-          <MoveSlotSelect
-            key={SLOT_LABELS[index]}
-            index={index}
-            value={moves[index]}
-            moves={moves}
-            allMoves={allMoves}
-            onSelect={(move) => setSlot(index, move)}
-          />
-        ))}
-      </div>
-    </section>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {SLOT_LABELS.map((_, index) => (
+        <MoveSlotSelect
+          key={SLOT_LABELS[index]}
+          index={index}
+          value={moves[index]}
+          moves={moves}
+          allMoves={allMoves}
+          onSelect={(move) => setSlot(index, move)}
+        />
+      ))}
+    </div>
   );
 }

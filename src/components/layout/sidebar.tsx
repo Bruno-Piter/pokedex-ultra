@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown,
@@ -10,6 +10,7 @@ import {
   Dna,
   Layers,
   RotateCcw,
+  Swords,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,9 +19,23 @@ import { FilterSection } from "@/components/layout/filter-section";
 import {
   countActiveFilters,
   EMPTY_MOVE_FILTERS,
+  getSelectedMoves,
   hasActiveFilters,
   type FilterState,
 } from "@/components/layout/filter-utils";
+import {
+  formatMoveName,
+  MoveSearchPanel,
+} from "@/components/layout/move-search-panel";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -126,8 +141,10 @@ function FilterPanel({
   className,
   bodyClassName,
 }: FilterPanelProps) {
+  const [movesOpen, setMovesOpen] = useState(false);
   const activeTotal = countActiveFilters(filters);
   const filtersActive = hasActiveFilters(filters);
+  const selectedMoves = getSelectedMoves(filters.moves);
 
   const toggleType = (type: string) => {
     const selected = filters.types;
@@ -224,7 +241,7 @@ function FilterPanel({
             )}
           >
             <RotateCcw className="size-3" />
-            Clear
+            Limpar
           </Button>
           {onClose ? (
             <Button
@@ -232,7 +249,7 @@ function FilterPanel({
               variant="ghost"
               size="icon"
               className="size-11 sm:size-8"
-              aria-label="Close filters"
+              aria-label="Fechar filtros"
               onClick={onClose}
             >
               <X className="size-4" />
@@ -455,6 +472,88 @@ function FilterPanel({
             })}
           </div>
         </FilterSection>
+
+        <FilterSection
+          index={4}
+          icon={<Swords className="size-3.5" />}
+          title="Busca por ataques"
+          hint="Pokémon que conhecem todos os ataques selecionados (AND)."
+          activeCount={selectedMoves.length}
+        >
+          {selectedMoves.length > 0 ? (
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {selectedMoves.map((move) => (
+                <span
+                  key={move}
+                  className="inline-flex max-w-full items-center rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary ring-1 ring-primary/25"
+                >
+                  <span className="truncate">{formatMoveName(move)}</span>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              Nenhum ataque selecionado
+            </p>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-11 w-full gap-2 sm:h-9"
+            onClick={() => setMovesOpen(true)}
+          >
+            <Swords className="size-3.5" />
+            {selectedMoves.length > 0
+              ? "Editar ataques"
+              : "Abrir busca por ataques"}
+          </Button>
+
+          <Dialog open={movesOpen} onOpenChange={setMovesOpen}>
+            <DialogContent
+              showCloseButton={false}
+              overlayClassName="z-[80]"
+              className="z-[80] flex max-h-[min(92dvh,44rem)] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl data-open:slide-in-from-top-3 data-closed:slide-out-to-top-2"
+            >
+              <DialogHeader className="shrink-0 gap-1 border-b border-border/40 px-4 py-3 text-left">
+                <DialogTitle>Busca por ataques</DialogTitle>
+                <DialogDescription>
+                  Escolha até 4 ataques. Só entram Pokémon que conhecem todos
+                  (filtro AND).
+                </DialogDescription>
+              </DialogHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+                <MoveSearchPanel
+                  moves={filters.moves}
+                  onChange={(moves) => onChange({ ...filters, moves })}
+                />
+              </div>
+              <DialogFooter className="shrink-0 sm:justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={selectedMoves.length === 0}
+                  className={
+                    selectedMoves.length > 0
+                      ? "border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      : undefined
+                  }
+                  onClick={() =>
+                    onChange({ ...filters, moves: EMPTY_MOVE_FILTERS })
+                  }
+                >
+                  <X className="size-3.5" />
+                  Limpar ataques
+                </Button>
+                <DialogClose
+                  render={<Button type="button" className="gap-1" />}
+                >
+                  Fechar
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </FilterSection>
       </div>
     </div>
   );
@@ -469,7 +568,10 @@ export function Sidebar({
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onOpenChange?.(false);
+      if (event.key !== "Escape") return;
+      // Nested Dialog (busca por ataques) owns Escape while open
+      if (document.querySelector('[data-slot="dialog-content"]')) return;
+      onOpenChange?.(false);
     };
     document.addEventListener("keydown", onKeyDown);
     const prev = document.body.style.overflow;
