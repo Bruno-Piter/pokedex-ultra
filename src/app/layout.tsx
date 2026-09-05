@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryProvider } from "@/providers/query-provider";
 import { ArtworkProvider } from "@/providers/artwork-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { PwaProvider } from "@/providers/pwa-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,14 +17,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const APP_NAME = "Pokédex Ultra";
+const APP_DESCRIPTION =
+  "A modern Pokédex powered by PokéAPI — explore Pokémon, stats, evolutions, and more.";
+
 export const metadata: Metadata = {
-  title: "Pokédex Ultra",
-  description:
-    "A modern Pokédex powered by PokéAPI — explore Pokémon, stats, evolutions, and more.",
+  applicationName: APP_NAME,
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: APP_NAME,
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: "/icon.png",
     apple: "/apple-icon.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#161616",
 };
 
 export default function RootLayout({
@@ -38,13 +55,15 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans">
-        <ThemeProvider>
-          <ArtworkProvider>
-            <QueryProvider>
-              <TooltipProvider>{children}</TooltipProvider>
-            </QueryProvider>
-          </ArtworkProvider>
-        </ThemeProvider>
+        <PwaProvider>
+          <ThemeProvider>
+            <ArtworkProvider>
+              <QueryProvider>
+                <TooltipProvider>{children}</TooltipProvider>
+              </QueryProvider>
+            </ArtworkProvider>
+          </ThemeProvider>
+        </PwaProvider>
       </body>
     </html>
   );

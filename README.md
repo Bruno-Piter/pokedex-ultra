@@ -59,8 +59,17 @@ Abra [http://localhost:3000](http://localhost:3000).
 npm run build   # produção
 npm run start   # servir build
 npm run lint    # ESLint
-npm run icons   # regenerar favicon a partir de scripts/source-icon.png
+npm run icons   # regenerar favicon e icones PWA a partir de scripts/source-icon.png
 ```
+
+
+## Progressive Web App
+
+Producao usa Serwist para cache do shell/assets. Em desenvolvimento o worker fica desligado.
+
+**Como instalar o app:** Chrome/Edge (desktop) pelo icone na barra; Android pelo menu do Chrome; iOS Safari via Compartilhar > Adicionar a Tela de Inicio.
+
+Dados da PokeAPI precisam de rede; falhas mostram erro amigavel (sem tela branca).
 
 ## Estrutura
 
@@ -80,3 +89,4 @@ src/
 ---
 
 Pokémon © Nintendo / Game Freak / The Pokémon Company. Dados via [PokéAPI](https://pokeapi.co/).
+
