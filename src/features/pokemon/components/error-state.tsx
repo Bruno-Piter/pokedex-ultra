@@ -10,7 +10,7 @@ type ErrorStateProps = {
 };
 
 export function ErrorState({
-  message = "Something went wrong while loading data.",
+  message = "Nao foi possivel carregar os dados da PokeAPI. Verifique a conexao e tente de novo.",
   onRetry,
 }: ErrorStateProps) {
   return (
