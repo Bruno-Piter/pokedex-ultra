@@ -7,7 +7,6 @@ import {
   countActiveFilters,
   EMPTY_MOVE_FILTERS,
 } from "@/components/layout/filter-utils";
-import { MoveSearchPanel } from "@/components/layout/move-search-panel";
 import { PokemonGrid } from "@/features/pokemon/components/pokemon-grid";
 import { usePokemonCatalog } from "@/features/pokemon/hooks/use-pokemon-catalog";
 
@@ -46,12 +45,6 @@ export default function HomePage() {
             onOpenChange={setFiltersOpen}
           />
           <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain pb-4">
-            <MoveSearchPanel
-              moves={filters.moves}
-              onChange={(moves) =>
-                setFilters((current) => ({ ...current, moves }))
-              }
-            />
             <PokemonGrid filters={filters} />
           </div>
         </div>
