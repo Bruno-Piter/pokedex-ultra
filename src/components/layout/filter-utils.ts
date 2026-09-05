@@ -39,7 +39,11 @@ export function pokemonKnowsAllMoves(
   moves: string[],
 ): boolean {
   if (moves.length === 0) return true;
-  const known = new Set(pokemon.moves.map((entry) => entry.move.name));
+  const known = new Set(
+    pokemon.moves.map((entry) =>
+      typeof entry === "string" ? entry : entry.move.name,
+    ),
+  );
   return moves.every((move) => known.has(move));
 }
 

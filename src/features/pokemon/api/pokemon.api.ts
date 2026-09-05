@@ -13,6 +13,7 @@ import type {
   TypeData,
   VersionGroup,
 } from "@/features/pokemon/types";
+import { hydrateCatalog } from "@/lib/catalog/hydrate";
 
 const PAGE_SIZE = 24;
 const BATCH_CONCURRENCY = 10;
@@ -157,18 +158,24 @@ export async function getAllPokemonNames(): Promise<NamedResource[]> {
   return all.results;
 }
 
-export async function fetchAllPokemon(): Promise<Pokemon[]> {
-  const names = await getAllPokemonNames();
-  const ids = names.map((entry) => extractIdFromUrl(entry.url));
-  const map = await fetchInBatches(
-    ids.map(String),
-    (id) => getPokemonByIdOrName(id),
-    BATCH_CONCURRENCY,
-  );
 
-  return ids
-    .map((id) => map.get(String(id)))
-    .filter((pokemon): pokemon is Pokemon => pokemon !== undefined);
+export async function fetchCatalog(): Promise<Pokemon[]> {
+  const staticRes = await fetch("/data/catalog.json", {
+    cache: "force-cache",
+  });
+  if (staticRes.ok) {
+    return hydrateCatalog(await staticRes.json());
+  }
+
+  const apiRes = await fetch("/api/catalog");
+  if (!apiRes.ok) {
+    throw new Error("Failed to load Pokemon catalog");
+  }
+  return hydrateCatalog(await apiRes.json());
+}
+
+export async function fetchAllPokemon(): Promise<Pokemon[]> {
+  return fetchCatalog();
 }
 
 export async function fetchPokemonBatch(urls: string[]): Promise<Pokemon[]> {

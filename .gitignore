@@ -45,3 +45,6 @@ public/sw*
 public/swe-worker*
 .vercel
 .env*
+
+# generated slim catalog (rebuilt on next build)
+/public/data/catalog.json
