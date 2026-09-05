@@ -121,15 +121,48 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    overscroll-behavior-y: none;
+  }
+  body {
+    @apply bg-background text-foreground;
+    overscroll-behavior-y: none;
+  }
+  html.standalone,
+  html.standalone body {
+    min-height: 100dvh;
+    height: 100%;
   }
 }
 
 @layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pl-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  .pr-safe {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .px-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
   .glass-card {
     @apply border border-border/50 bg-card/60 backdrop-blur-xl;
   }
@@ -176,5 +209,12 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+@media (display-mode: standalone) {
+  html,
+  body {
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
   }
 }

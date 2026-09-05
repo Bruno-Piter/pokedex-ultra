@@ -9,9 +9,11 @@ export default async function PokemonPage({ params }: PageProps) {
   const { id } = await params;
 
   return (
-    <div className="min-h-screen bg-mesh">
+    <div className="flex h-screen max-h-[100dvh] flex-col overflow-hidden bg-mesh">
       <Header />
-      <PokemonDetailView id={id} />
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-safe">
+        <PokemonDetailView id={id} />
+      </div>
     </div>
   );
 }
