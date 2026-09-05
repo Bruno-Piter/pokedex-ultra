@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { PokemonCard } from "@/features/pokemon/components/pokemon-card";
-import {
-  POKEMON_LIST_MOBILE_MIN_WIDTH,
-  POKEMON_LIST_ROW_CLASS,
-} from "@/features/pokemon/components/pokemon-list-row-layout";
+import { POKEMON_LIST_ROW_CLASS } from "@/features/pokemon/components/pokemon-list-row-layout";
 import {
   PokemonGridSkeleton,
 } from "@/features/pokemon/components/pokemon-skeleton";
@@ -38,7 +35,7 @@ function getStatHeaderColor(stat: (typeof LIST_STAT_COLUMNS)[number]): string {
 
 function PokemonListHeader({ statSort }: { statSort: StatFilterStat[] }) {
   return (
-    <div className="hidden sm:block">
+    <div className="hidden md:block">
       <div className="glass-card rounded-xl border border-border/50 bg-card/50 px-3 py-2.5 shadow-sm backdrop-blur-sm sm:px-4">
         <div className={POKEMON_LIST_ROW_CLASS}>
           <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
@@ -186,25 +183,18 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
         </p>
       ) : null}
 
-      <div className="min-w-0 w-full overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] lg:overflow-x-visible [&::-webkit-scrollbar]:hidden">
-        <div
-          className={cn(
-            "flex w-full flex-col gap-2",
-            POKEMON_LIST_MOBILE_MIN_WIDTH,
-            "lg:min-w-0",
-          )}
-        >
-          <PokemonListHeader statSort={filters.statSort} />
+      {/* px-1 gives card glow/box-shadow room so overflow-hidden cards aren't flush-clipped */}
+      <div className="flex w-full min-w-0 flex-col gap-2 px-1">
+        <PokemonListHeader statSort={filters.statSort} />
 
-          {visibleCatalog.map((pokemon, index) => (
-            <PokemonCard
-              key={pokemon.id}
-              pokemon={pokemon}
-              index={index}
-              statSort={filters.statSort}
-            />
-          ))}
-        </div>
+        {visibleCatalog.map((pokemon, index) => (
+          <PokemonCard
+            key={pokemon.id}
+            pokemon={pokemon}
+            index={index}
+            statSort={filters.statSort}
+          />
+        ))}
       </div>
 
       <div ref={loadMoreRef} className="flex justify-center py-6">

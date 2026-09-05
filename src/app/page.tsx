@@ -36,7 +36,9 @@ export default function HomePage() {
         activeFilterCount={activeFilterCount}
         onOpenFilters={() => setFiltersOpen(true)}
       />
-      <main className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col px-4 pt-3 pb-safe sm:px-6">
+      <main
+        className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col pt-3 pb-safe pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]"
+      >
         <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch">
           <Sidebar
             filters={filters}

@@ -10,7 +10,7 @@ export function ArtworkToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="size-9" disabled>
+      <Button variant="ghost" size="icon" className="size-11 touch-target shrink-0" disabled>
         <ImageIcon className="size-4" />
       </Button>
     );
@@ -20,7 +20,7 @@ export function ArtworkToggle() {
     <Button
       variant="ghost"
       size="icon"
-      className="size-9"
+      className="size-11 touch-target shrink-0"
       onClick={toggle}
       title={isPixel ? "Arte: Pixel (clique para original)" : "Arte: Original (clique para pixel)"}
       aria-label={isPixel ? "Usar arte original" : "Usar pixel art"}
