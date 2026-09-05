@@ -60,11 +60,11 @@ export function PokemonDetailView({ id }: PokemonDetailViewProps) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8"
+      className="mx-auto max-w-7xl space-y-6 px-4 py-6 pb-safe sm:px-6 sm:py-8"
     >
       <Link
         href="/"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="touch-target inline-flex items-center gap-2 rounded-lg px-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Back to Pokédex

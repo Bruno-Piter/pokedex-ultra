@@ -71,6 +71,8 @@ Producao usa Serwist para cache do shell/assets. Em desenvolvimento o worker fic
 
 Dados da PokeAPI precisam de rede; falhas mostram erro amigavel (sem tela branca).
 
+UI PWA: safe-area insets + shell standalone (drawer de filtros no mobile, scroll nos painéis).
+
 ## Estrutura
 
 ```
