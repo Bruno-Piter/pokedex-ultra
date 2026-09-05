@@ -31,6 +31,7 @@ export function PokemonCard({ pokemon, index = 0, statSort = [] }: PokemonCardPr
   const [primaryColor, secondaryColor] = getPokemonTypeColors(pokemon.types);
   const statMap = getBaseStatMap(pokemon.stats);
   const abilities = [...pokemon.abilities].sort((a, b) => a.slot - b.slot);
+  const displayName = pokemon.name.replace(/-/g, " ");
 
   return (
     <motion.div
@@ -48,8 +49,37 @@ export function PokemonCard({ pokemon, index = 0, statSort = [] }: PokemonCardPr
         >
           <TypeCardGlow colors={[primaryColor, secondaryColor]} />
 
-          <div className="relative z-10 overflow-hidden px-3 sm:px-4">
-            <div className={POKEMON_LIST_ROW_CLASS}>
+          <div className="relative z-10 px-3 sm:px-4">
+            {/* Mobile / narrow: compact card — sprite + id/name + types */}
+            <div className="flex items-center gap-3 md:hidden">
+              <div className="relative size-14 shrink-0 sm:size-16">
+                <PokemonSpriteImage
+                  pokemon={pokemon}
+                  alt={pokemon.name}
+                  fill
+                  sizes="64px"
+                  className="object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-110"
+                />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-xs text-muted-foreground">
+                  {formatPokemonId(pokemon.id)}
+                </p>
+                <h3 className="font-heading truncate text-base font-bold capitalize leading-tight">
+                  {displayName}
+                </h3>
+              </div>
+
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                {pokemon.types.map(({ type }) => (
+                  <TypeBadge key={type.name} type={type.name} />
+                ))}
+              </div>
+            </div>
+
+            {/* Desktop / md+: full stats table row */}
+            <div className={cn("hidden md:grid", POKEMON_LIST_ROW_CLASS)}>
               <div className="relative size-[72px] shrink-0">
                 <PokemonSpriteImage
                   pokemon={pokemon}
@@ -65,7 +95,7 @@ export function PokemonCard({ pokemon, index = 0, statSort = [] }: PokemonCardPr
                   {formatPokemonId(pokemon.id)}
                 </p>
                 <h3 className="font-heading truncate text-base font-bold capitalize">
-                  {pokemon.name.replace(/-/g, " ")}
+                  {displayName}
                 </h3>
               </div>
 
