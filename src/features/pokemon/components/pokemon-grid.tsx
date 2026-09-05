@@ -14,12 +14,10 @@ import { ErrorState } from "@/features/pokemon/components/error-state";
 import { PAGE_SIZE } from "@/features/pokemon/api/pokemon.api";
 import { usePokemonCatalog } from "@/features/pokemon/hooks/use-pokemon-catalog";
 import type { FilterState } from "@/components/layout/sidebar";
-import type { Pokemon } from "@/features/pokemon/types";
 import {
-  filterByGeneration,
-  matchesPokemonSearch,
-  sortPokemonByStatPriority,
-} from "@/features/pokemon/utils/format";
+  filterAndSortCatalog,
+  getSelectedMoves,
+} from "@/components/layout/filter-utils";
 import {
   isStatColumnHighlighted,
   LIST_STAT_COLUMNS,
@@ -32,33 +30,6 @@ import { cn } from "@/lib/utils";
 type PokemonGridProps = {
   filters: FilterState;
 };
-
-function filterAndSortCatalog(catalog: Pokemon[], filters: FilterState): Pokemon[] {
-  let result = catalog;
-
-  if (filters.search.trim()) {
-    result = result.filter((pokemon) =>
-      matchesPokemonSearch(pokemon, filters.search),
-    );
-  }
-
-  if (filters.types.length > 0) {
-    result = result.filter((pokemon) =>
-      filters.types.every((type) =>
-        pokemon.types.some((entry) => entry.type.name === type),
-      ),
-    );
-  }
-
-  result = filterByGeneration(result, filters.generation);
-  return sortPokemonByStatPriority(
-    result,
-    filters.statSort,
-    filters.sort,
-    filters.statSortDirection,
-    filters.sortDirection,
-  );
-}
 
 function getStatHeaderColor(stat: (typeof LIST_STAT_COLUMNS)[number]): string {
   if (stat === "bst") return STAT_COLORS.hp;
@@ -118,6 +89,9 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
     return filterAndSortCatalog(catalogQuery.data, filters);
   }, [catalogQuery.data, filters]);
 
+  const selectedMoves = getSelectedMoves(filters.moves);
+  const movesKey = selectedMoves.join(",");
+
   const filterKey = useMemo(
     () =>
       [
@@ -128,6 +102,7 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
         filters.sortDirection,
         filters.statSortDirection,
         filters.search,
+        movesKey,
       ].join("|"),
     [
       filters.types,
@@ -137,6 +112,7 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
       filters.sortDirection,
       filters.statSortDirection,
       filters.search,
+      movesKey,
     ],
   );
 
@@ -194,7 +170,9 @@ export function PokemonGrid({ filters }: PokemonGridProps) {
         <p className="text-sm text-muted-foreground">
           {filters.search.trim()
             ? `Nenhum resultado para "${filters.search.trim()}".`
-            : "Tente ajustar os filtros selecionados."}
+            : selectedMoves.length > 0
+              ? "Nenhum Pokémon conhece todos os ataques selecionados. Tente limpar ou trocar os ataques."
+              : "Tente ajustar os filtros selecionados."}
         </p>
       </motion.div>
     );

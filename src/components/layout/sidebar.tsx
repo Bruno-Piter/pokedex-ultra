@@ -17,6 +17,7 @@ import { FILTER_SIDEBAR_WIDTH_CLASS } from "@/components/layout/layout-constants
 import { FilterSection } from "@/components/layout/filter-section";
 import {
   countActiveFilters,
+  EMPTY_MOVE_FILTERS,
   hasActiveFilters,
   type FilterState,
 } from "@/components/layout/filter-utils";
@@ -147,6 +148,7 @@ function FilterPanel({
       generation: null,
       statSort: [],
       search: "",
+      moves: EMPTY_MOVE_FILTERS,
     });
 
   const toggleStatSort = (stat: StatFilterStat) => {
