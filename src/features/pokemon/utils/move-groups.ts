@@ -1,114 +1,174 @@
-import type {
-  EnrichedMove,
-  LearnMethod,
-  MoveData,
-  MoveSection,
-  NormalizedMove,
-  PokemonMove,
-} from "@/features/pokemon/types";
+import {
+  formatMoveEffect,
+  getMoveStatsInGame,
+  type DamageClass,
+  type MoveInfo,
+  type MovesIndex,
+  type MoveStatsInGame,
+} from "@/lib/data/moves";
+import type { PokemonMove } from "@/features/pokemon/types";
+import { titleCase } from "@/features/pokemon/utils/format";
+import type { GameOption } from "@/features/pokemon/utils/version-group";
 
-const SECTION_ORDER: { id: LearnMethod; title: string }[] = [
-  { id: "level-up", title: "Level Up" },
-  { id: "machine", title: "TM & HM" },
-  { id: "egg", title: "Egg Moves" },
-  { id: "tutor", title: "Tutor" },
+export type LearnMethodGroup =
+  | "level-up"
+  | "reminder"
+  | "machine"
+  | "egg"
+  | "tutor"
+  | "train"
+  | "form-change"
+  | "other";
+
+const METHOD_GROUPS: Record<string, LearnMethodGroup> = {
+  "level-up": "level-up",
+  reminder: "reminder",
+  machine: "machine",
+  egg: "egg",
+  "light-ball-egg": "egg",
+  tutor: "tutor",
+  train: "train",
+  "form-change": "form-change",
+};
+
+export const MOVE_SECTIONS: {
+  id: LearnMethodGroup;
+  title: string;
+  description?: string;
+}[] = [
+  { id: "level-up", title: "Level up" },
+  {
+    id: "reminder",
+    title: "Move Reminder",
+    description: "Only learnable through the Move Reminder.",
+  },
+  { id: "machine", title: "TM / HM / TR" },
+  { id: "egg", title: "Egg moves" },
+  { id: "tutor", title: "Move Tutor" },
+  {
+    id: "train",
+    title: "Trainable moves",
+    description: "Moves this Pokémon can be trained to use in Pokémon Champions.",
+  },
+  { id: "form-change", title: "Form change" },
+  { id: "other", title: "Other" },
 ];
 
-function parseLearnMethod(name: string): LearnMethod {
-  if (
-    name === "level-up" ||
-    name === "machine" ||
-    name === "egg" ||
-    name === "tutor"
-  ) {
-    return name;
-  }
-  return "unknown";
+export type LearnedMove = {
+  key: string;
+  name: string;
+  label: string;
+  method: LearnMethodGroup;
+  /** Level for level-up moves (0 = learned on evolution). */
+  level: number;
+  machine: string | null;
+  info: MoveInfo | null;
+  /** Type/power/accuracy/PP as they were in the selected game. */
+  stats: MoveStatsInGame | null;
+  damageClass: DamageClass;
+  effect: string | null;
+};
+
+export type MoveSection = {
+  id: LearnMethodGroup;
+  title: string;
+  description?: string;
+  moves: LearnedMove[];
+};
+
+export function getLearnMethodGroup(method: string): LearnMethodGroup {
+  return METHOD_GROUPS[method] ?? "other";
 }
 
-export function normalizeMovesForVersionGroup(
-  moves: PokemonMove[],
-  versionGroupName: string,
-): NormalizedMove[] {
-  const normalized: NormalizedMove[] = [];
+/** TM/HM/TR label in the selected game (falls back to its DLC). */
+export function getMachineLabel(info: MoveInfo, game: GameOption): string | null {
+  return (
+    info.machines[game.id] ??
+    game.members.map((member) => info.machines[member]).find(Boolean) ??
+    null
+  );
+}
+
+/**
+ * Every (move, method, level) the Pokémon has in the selected game. A move can
+ * appear in several sections, e.g. learned by level-up and by TM.
+ */
+export function collectLearnedMoves(
+  moves: readonly PokemonMove[],
+  game: GameOption,
+  index: MovesIndex,
+): LearnedMove[] {
+  const members = new Set(game.members);
+  const learned = new Map<string, LearnedMove>();
 
   for (const entry of moves) {
-    const detail = entry.version_group_details.find(
-      (d) => d.version_group.name === versionGroupName,
-    );
-    if (!detail) continue;
+    const info = index.moves.get(entry.move.name) ?? null;
+    for (const detail of entry.version_group_details) {
+      if (!members.has(detail.version_group.name)) continue;
 
-    normalized.push({
-      name: entry.move.name,
-      method: parseLearnMethod(detail.move_learn_method.name),
-      level: detail.level_learned_at,
-      versionGroup: versionGroupName,
-    });
-  }
+      const method = getLearnMethodGroup(detail.move_learn_method.name);
+      const level = method === "level-up" ? detail.level_learned_at : 0;
+      const key = `${method}:${entry.move.name}:${level}`;
+      if (learned.has(key)) continue;
 
-  return normalized;
-}
-
-export function enrichMoves(
-  normalized: NormalizedMove[],
-  moveDetails: Map<string, MoveData>,
-  tmMap: Map<string, number>,
-): EnrichedMove[] {
-  return normalized.map((move) => {
-    const details = moveDetails.get(move.name);
-    return {
-      ...move,
-      type: details?.type.name ?? "normal",
-      damageClass: details?.damage_class.name ?? "status",
-      power: details?.power ?? null,
-      accuracy: details?.accuracy ?? null,
-      pp: details?.pp ?? null,
-      tmNumber: move.method === "machine" ? (tmMap.get(move.name) ?? null) : null,
-    };
-  });
-}
-
-function sortMoves(a: EnrichedMove, b: EnrichedMove): number {
-  if (a.method === "level-up" && b.method === "level-up") {
-    return a.level - b.level || a.name.localeCompare(b.name);
-  }
-  if (a.method === "machine" && b.method === "machine") {
-    const tmA = a.tmNumber ?? Number.MAX_SAFE_INTEGER;
-    const tmB = b.tmNumber ?? Number.MAX_SAFE_INTEGER;
-    return tmA - tmB || a.name.localeCompare(b.name);
-  }
-  return a.name.localeCompare(b.name);
-}
-
-export function groupMovesByMethod(moves: EnrichedMove[]): MoveSection[] {
-  const sections: MoveSection[] = [];
-
-  for (const { id, title } of SECTION_ORDER) {
-    const sectionMoves = moves.filter((m) => m.method === id).sort(sortMoves);
-    if (sectionMoves.length > 0) {
-      sections.push({ id, title, moves: sectionMoves });
+      const stats = info ? getMoveStatsInGame(info, game.id, index) : null;
+      learned.set(key, {
+        key,
+        name: entry.move.name,
+        label: info?.label ?? titleCase(entry.move.name),
+        method,
+        level,
+        machine: method === "machine" && info ? getMachineLabel(info, game) : null,
+        info,
+        stats,
+        damageClass: info?.damageClass ?? "status",
+        effect: info ? formatMoveEffect(info.effect, stats?.effectChance ?? null) : null,
+      });
     }
   }
 
-  return sections;
+  return [...learned.values()];
 }
 
-export function formatDamageClass(damageClass: string): string {
-  switch (damageClass) {
-    case "physical":
-      return "Physical";
-    case "special":
-      return "Special";
-    default:
-      return "Status";
-  }
+const MACHINE_PREFIX_ORDER: Record<string, number> = { TM: 0, HM: 1, TR: 2 };
+
+export function machineSortKey(label: string | null): number {
+  const match = label ? /^(TM|HM|TR)(\d+)$/.exec(label) : null;
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  return MACHINE_PREFIX_ORDER[match[1]] * 10_000 + Number(match[2]);
 }
 
-export function formatMoveStat(value: number | null): string {
-  return value === null ? "—" : String(value);
+function compareMoves(section: LearnMethodGroup) {
+  return (a: LearnedMove, b: LearnedMove) => {
+    if (section === "level-up") {
+      return a.level - b.level || a.label.localeCompare(b.label);
+    }
+    if (section === "machine") {
+      return machineSortKey(a.machine) - machineSortKey(b.machine) || a.label.localeCompare(b.label);
+    }
+    return a.label.localeCompare(b.label);
+  };
 }
 
-export function formatTmNumber(number: number | null): string {
-  if (number === null) return "—";
-  return `TM${String(number).padStart(3, "0")}`;
+export function groupLearnedMoves(moves: readonly LearnedMove[]): MoveSection[] {
+  return MOVE_SECTIONS.map((section) => ({
+    ...section,
+    moves: moves.filter((move) => move.method === section.id).sort(compareMoves(section.id)),
+  })).filter((section) => section.moves.length > 0);
+}
+
+export function formatLearnLevel(level: number): string {
+  return level <= 0 ? "Evo." : String(level);
+}
+
+export function formatDamageClass(damageClass: DamageClass): string {
+  return damageClass === "physical"
+    ? "Physical"
+    : damageClass === "special"
+      ? "Special"
+      : "Status";
+}
+
+export function formatMoveValue(value: number | null, suffix = ""): string {
+  return value === null ? "—" : `${value}${suffix}`;
 }

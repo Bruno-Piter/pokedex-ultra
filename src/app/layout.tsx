@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryProvider } from "@/providers/query-provider";
-import { ArtworkProvider } from "@/providers/artwork-provider";
-import { ThemeProvider } from "@/providers/theme-provider";
+import { NavigationTracker } from "@/components/layout/navigation-tracker";
+import { OfflineBanner } from "@/components/layout/offline-banner";
+import { MotionProvider } from "@/providers/motion-provider";
 import { PwaProvider } from "@/providers/pwa-provider";
+import { QueryProvider } from "@/providers/query-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
+import { THEME_COLORS } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,11 +22,14 @@ const geistMono = Geist_Mono({
 
 const APP_NAME = "Pokédex Ultra";
 const APP_DESCRIPTION =
-  "A modern Pokédex powered by PokéAPI — explore Pokémon, stats, evolutions, and more.";
+  "A fast, offline-ready Pokédex — stats, moves by game, evolutions and type matchups for every Pokémon.";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
-  title: APP_NAME,
+  title: {
+    default: APP_NAME,
+    template: `%s · ${APP_NAME}`,
+  },
   description: APP_DESCRIPTION,
   appleWebApp: {
     capable: true,
@@ -41,8 +47,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#161616" },
+    { media: "(prefers-color-scheme: light)", color: THEME_COLORS.light },
+    { media: "(prefers-color-scheme: dark)", color: THEME_COLORS.dark },
   ],
   width: "device-width",
   initialScale: 1,
@@ -59,17 +65,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full bg-background overscroll-none antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} dark bg-background antialiased`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col bg-background font-sans overscroll-none">
+      <body className="bg-mesh min-h-dvh font-sans">
         <PwaProvider>
           <ThemeProvider>
-            <ArtworkProvider>
-              <QueryProvider>
-                <TooltipProvider>{children}</TooltipProvider>
-              </QueryProvider>
-            </ArtworkProvider>
+            <QueryProvider>
+              <MotionProvider>
+                <TooltipProvider delay={250}>
+                  {children}
+                  <OfflineBanner />
+                  <NavigationTracker />
+                </TooltipProvider>
+              </MotionProvider>
+            </QueryProvider>
           </ThemeProvider>
         </PwaProvider>
       </body>

@@ -1,13 +1,11 @@
+// ---------------------------------------------------------------------------
+// PokéAPI resources fetched at runtime (detail page only). List data comes
+// from the static catalog — see src/lib/data/catalog.ts.
+// ---------------------------------------------------------------------------
+
 export type NamedResource = {
   name: string;
   url: string;
-};
-
-export type ResourceList = {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: NamedResource[];
 };
 
 export type LocalizedName = {
@@ -18,7 +16,7 @@ export type LocalizedName = {
 export type FlavorText = {
   flavor_text: string;
   language: NamedResource;
-  version: NamedResource;
+  version?: NamedResource;
 };
 
 export type EffectEntry = {
@@ -55,38 +53,18 @@ export type PokemonMove = {
   version_group_details: VersionDetail[];
 };
 
-export type PokemonSpriteVersion = {
-  front_default?: string | null;
-};
-
-export type PokemonSprites = {
-  front_default: string | null;
-  other?: {
-    "official-artwork"?: {
-      front_default: string | null;
-      front_shiny?: string | null;
-    };
-    home?: {
-      front_default: string | null;
-    };
-  };
-  versions?: Record<string, Record<string, PokemonSpriteVersion>>;
-};
-
 export type Pokemon = {
   id: number;
   name: string;
-  base_experience: number;
+  base_experience: number | null;
   height: number;
   weight: number;
-  order: number;
-  sprites: PokemonSprites;
+  is_default?: boolean;
   types: PokemonType[];
   stats: PokemonStat[];
   abilities: PokemonAbility[];
   moves: PokemonMove[];
   species: NamedResource;
-  forms: NamedResource[];
 };
 
 export type PokemonSpecies = {
@@ -94,61 +72,56 @@ export type PokemonSpecies = {
   name: string;
   gender_rate: number;
   capture_rate: number;
-  base_happiness: number;
+  base_happiness: number | null;
+  hatch_counter: number | null;
+  is_baby: boolean;
   is_legendary: boolean;
   is_mythical: boolean;
   color: NamedResource;
   habitat: NamedResource | null;
-  shape: NamedResource;
+  shape: NamedResource | null;
   generation: NamedResource;
-  evolution_chain: NamedResource;
+  growth_rate: NamedResource | null;
+  egg_groups: NamedResource[];
+  evolution_chain: { url: string } | null;
   flavor_text_entries: FlavorText[];
+  genera: { genus: string; language: NamedResource }[];
   names: LocalizedName[];
-  varieties: SpeciesVariety[];
-};
-
-export type SpeciesVariety = {
-  is_default: boolean;
-  pokemon: NamedResource;
-};
-
-export type PokemonFormData = {
-  id: number;
-  name: string;
-  form_name: string;
-  is_mega: boolean;
-  is_battle_only: boolean;
-  is_default: boolean;
-  pokemon: NamedResource;
+  varieties: { is_default: boolean; pokemon: NamedResource }[];
 };
 
 export type EvolutionDetail = {
-  min_level: number | null;
-  item: NamedResource | null;
   trigger: NamedResource;
+  /** Game the condition applies to; `is_default` marks the current method. */
+  version_group?: NamedResource | null;
+  is_default?: boolean;
+  item: NamedResource | null;
+  held_item?: NamedResource | null;
   gender: number | null;
-  min_happiness?: number | null;
-  min_affection?: number | null;
-  time_of_day?: string;
   known_move?: NamedResource | null;
+  known_move_type?: NamedResource | null;
+  location?: NamedResource | null;
+  min_level: number | null;
+  min_happiness?: number | null;
+  min_beauty?: number | null;
+  min_affection?: number | null;
+  near_special_rock?: boolean;
+  needs_multiplayer?: boolean;
+  needs_overworld_rain?: boolean;
+  party_species?: NamedResource | null;
+  party_type?: NamedResource | null;
+  relative_physical_stats?: number | null;
+  time_of_day?: string;
+  trade_species?: NamedResource | null;
+  turn_upside_down?: boolean;
+  region?: NamedResource | null;
+  required_pokemon_form?: NamedResource | null;
+  evolved_pokemon_form?: NamedResource | null;
+  used_move?: NamedResource | null;
+  min_move_count?: number | null;
+  min_steps?: number | null;
+  min_damage_taken?: number | null;
 };
-
-export type PokemonSortOption =
-  | "id"
-  | "name"
-  | "weight"
-  | "height"
-  | "hp"
-  | "attack"
-  | "defense"
-  | "special-attack"
-  | "special-defense"
-  | "speed"
-  | "bst";
-
-export type SortDirection = "asc" | "desc";
-
-export type StatFilterStat = StatName | "bst";
 
 export type ChainLink = {
   is_baby: boolean;
@@ -157,111 +130,14 @@ export type ChainLink = {
   evolves_to: ChainLink[];
 };
 
-export type ExtendedChainLink = {
-  species: NamedResource;
-  speciesId: number;
-  pokemonId: number;
-  pokemonName: string;
-  displayName: string;
-  isFormBranch: boolean;
-  connectorLabel: string | null;
-  evolution_details: EvolutionDetail[];
-  evolves_to: ExtendedChainLink[];
-};
-
 export type EvolutionChain = {
   id: number;
   chain: ChainLink;
 };
 
-export type TypePokemon = {
-  pokemon: NamedResource;
-  slot: number;
-};
-
-export type TypeDamageRelations = {
-  double_damage_from: NamedResource[];
-  half_damage_from: NamedResource[];
-  no_damage_from: NamedResource[];
-};
-
-export type TypeData = {
-  id: number;
-  name: string;
-  pokemon: TypePokemon[];
-  damage_relations: TypeDamageRelations;
-};
-
-export type AbilityData = {
-  id: number;
-  name: string;
-  effect_entries: EffectEntry[];
-  flavor_text_entries: FlavorText[];
-};
-
-export type MoveData = {
-  id: number;
-  name: string;
-  accuracy: number | null;
-  power: number | null;
-  pp: number | null;
-  priority: number;
-  type: NamedResource;
-  damage_class: NamedResource;
-  effect_entries: EffectEntry[];
-  flavor_text_entries: FlavorText[];
-  machines: Array<{
-    machine: NamedResource;
-    version_group: NamedResource;
-  }>;
-};
-
-export type VersionGroup = {
-  id: number;
-  name: string;
-  order: number;
-  generation: NamedResource;
-  move_learn_methods: NamedResource[];
-  pokedexes: NamedResource[];
-  regions: NamedResource[];
-  versions: NamedResource[];
-};
-
-export type Machine = {
-  id: number;
-  item: NamedResource;
-  move: NamedResource;
-  version_group: NamedResource;
-};
-
-export type LearnMethod =
-  | "level-up"
-  | "machine"
-  | "egg"
-  | "tutor"
-  | "unknown";
-
-export type NormalizedMove = {
-  name: string;
-  method: LearnMethod;
-  level: number;
-  versionGroup: string;
-};
-
-export type EnrichedMove = NormalizedMove & {
-  type: string;
-  damageClass: string;
-  power: number | null;
-  accuracy: number | null;
-  pp: number | null;
-  tmNumber: number | null;
-};
-
-export type MoveSection = {
-  id: LearnMethod;
-  title: string;
-  moves: EnrichedMove[];
-};
+// ---------------------------------------------------------------------------
+// App types
+// ---------------------------------------------------------------------------
 
 export type StatName =
   | "hp"
@@ -270,6 +146,10 @@ export type StatName =
   | "special-attack"
   | "special-defense"
   | "speed";
+
+export type StatFilterStat = StatName | "bst";
+
+export type SortDirection = "asc" | "desc";
 
 export type NatureModifier = "hindering" | "neutral" | "beneficial";
 

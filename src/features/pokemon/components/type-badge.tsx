@@ -1,27 +1,33 @@
-"use client";
-
-import { motion } from "framer-motion";
+import { getTypeColor, getTypeTextColor } from "@/features/pokemon/utils/format";
 import { cn } from "@/lib/utils";
-import { getTypeColor } from "@/features/pokemon/utils/format";
 
 type TypeBadgeProps = {
   type: string;
+  size?: "sm" | "md" | "lg";
   className?: string;
 };
 
-export function TypeBadge({ type, className }: TypeBadgeProps) {
-  const color = getTypeColor(type);
+const SIZES = {
+  sm: "h-5 px-2 text-[10px]",
+  md: "h-6 px-2.5 text-[11px]",
+  lg: "h-7 px-3.5 text-xs",
+};
 
+export function TypeBadge({ type, size = "md", className }: TypeBadgeProps) {
   return (
-    <motion.span
-      whileHover={{ scale: 1.05 }}
+    <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize text-white shadow-sm",
+        "inline-flex shrink-0 items-center justify-center rounded-full font-bold tracking-wide uppercase shadow-sm ring-1 ring-black/10 ring-inset",
+        SIZES[size],
         className,
       )}
-      style={{ backgroundColor: color }}
+      style={{
+        backgroundColor: getTypeColor(type),
+        backgroundImage: "linear-gradient(180deg, rgb(255 255 255 / 0.22), transparent 60%)",
+        color: getTypeTextColor(type),
+      }}
     >
       {type}
-    </motion.span>
+    </span>
   );
 }

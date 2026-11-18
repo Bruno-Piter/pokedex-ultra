@@ -2,22 +2,15 @@
 
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { useEffect, type ReactNode } from "react";
+import { THEME_COLORS } from "@/lib/theme";
 
-const THEME_COLORS = {
-  light: "#ffffff",
-  dark: "#161616",
-} as const;
-
+/** Keeps the browser/PWA status bar color in sync with the active theme. */
 function ThemeColorSync() {
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
-    const color =
-      resolvedTheme === "light" ? THEME_COLORS.light : THEME_COLORS.dark;
-
-    const metas = document.querySelectorAll<HTMLMetaElement>(
-      'meta[name="theme-color"]',
-    );
+    const color = resolvedTheme === "light" ? THEME_COLORS.light : THEME_COLORS.dark;
+    const metas = document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]');
     if (metas.length === 0) {
       const meta = document.createElement("meta");
       meta.setAttribute("name", "theme-color");
@@ -25,10 +18,7 @@ function ThemeColorSync() {
       document.head.appendChild(meta);
       return;
     }
-
-    metas.forEach((meta) => {
-      meta.setAttribute("content", color);
-    });
+    metas.forEach((meta) => meta.setAttribute("content", color));
   }, [resolvedTheme]);
 
   return null;

@@ -1,68 +1,43 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useAbility } from "@/features/pokemon/hooks/use-pokemon-detail";
-import type { AbilityData, PokemonAbility } from "@/features/pokemon/types";
-import { getFlavorText } from "@/features/pokemon/utils/format";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { AbilityInfo } from "@/lib/data/catalog";
+import { titleCase } from "@/features/pokemon/utils/format";
 import { cn } from "@/lib/utils";
 
-export function getAbilityShortEffect(
-  ability: AbilityData | undefined,
-): string | null {
-  if (!ability) return null;
-
-  return (
-    ability.effect_entries.find((e) => e.language.name === "en")
-      ?.short_effect ??
-    getFlavorText(ability.flavor_text_entries ?? [], "en") ??
-    null
-  );
-}
-
 type AbilityTooltipProps = {
-  entry: PokemonAbility;
+  name: string;
+  hidden: boolean;
+  info: AbilityInfo | undefined;
   className?: string;
 };
 
-export function AbilityTooltip({ entry, className }: AbilityTooltipProps) {
-  const [open, setOpen] = useState(false);
-  const { data: ability, isLoading } = useAbility(entry.ability.name, open);
-  const effect = getAbilityShortEffect(ability);
-  const name = entry.ability.name.replace(/-/g, " ");
+/** Ability name with its description on hover/focus (desktop list). */
+export function AbilityTooltip({ name, hidden, info, className }: AbilityTooltipProps) {
+  const label = info?.name ?? titleCase(name);
 
   return (
-    <Tooltip open={open} onOpenChange={setOpen}>
+    <Tooltip>
       <TooltipTrigger
+        render={<span tabIndex={0} />}
         className={cn(
-          "block truncate capitalize text-left underline-offset-2 hover:underline",
+          "block w-fit max-w-full cursor-help truncate rounded-sm text-left decoration-dotted underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring",
+          hidden && "text-muted-foreground",
           className,
         )}
       >
-        {name}
-        {entry.is_hidden ? (
-          <span className="text-muted-foreground"> (H)</span>
-        ) : null}
+        {label}
+        {hidden ? <span className="ml-1 text-[10px] font-semibold uppercase opacity-70">H</span> : null}
       </TooltipTrigger>
       <TooltipContent
         side="top"
-        className="max-w-xs text-left leading-relaxed"
+        className="max-w-xs flex-col items-start gap-0 py-2 text-left leading-relaxed"
       >
-        <p className="font-semibold capitalize">{name}</p>
-        {entry.is_hidden ? (
-          <p className="text-[10px] uppercase tracking-wide opacity-70">
-            Hidden ability
-          </p>
-        ) : null}
-        <p className="mt-1 opacity-90">
-          {isLoading
-            ? "Loading..."
-            : (effect ?? "No description available.")}
+        <p className="font-semibold">
+          {label}
+          {hidden ? <span className="ml-1.5 text-[10px] uppercase opacity-70">Hidden ability</span> : null}
         </p>
+        <p className="mt-1 opacity-90">{info?.effect ?? "No description available."}</p>
       </TooltipContent>
     </Tooltip>
   );

@@ -1,60 +1,54 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export type ArtworkMode = "official" | "pixel";
 
 const STORAGE_KEY = "pokedex-artwork-mode";
+const listeners = new Set<() => void>();
 
-type ArtworkContextValue = {
-  mode: ArtworkMode;
-  setMode: (mode: ArtworkMode) => void;
-  toggle: () => void;
-  mounted: boolean;
-};
-
-const ArtworkContext = createContext<ArtworkContextValue | null>(null);
-
-function readStoredMode(): ArtworkMode {
-  if (typeof window === "undefined") return "official";
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored === "pixel" ? "pixel" : "official";
-}
-
-export function ArtworkProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ArtworkMode>(() => readStoredMode());
-  const mounted = typeof window !== "undefined";
-
-  const setMode = useCallback((next: ArtworkMode) => {
-    setModeState(next);
-    localStorage.setItem(STORAGE_KEY, next);
-  }, []);
-
-  const toggle = useCallback(() => {
-    setMode(mode === "official" ? "pixel" : "official");
-  }, [mode, setMode]);
-
-  const value = useMemo(
-    () => ({ mode, setMode, toggle, mounted }),
-    [mode, setMode, toggle, mounted],
-  );
-
-  return (
-    <ArtworkContext.Provider value={value}>{children}</ArtworkContext.Provider>
-  );
-}
-
-export function useArtworkMode() {
-  const context = useContext(ArtworkContext);
-  if (!context) {
-    throw new Error("useArtworkMode must be used within ArtworkProvider");
+function readMode(): ArtworkMode {
+  try {
+    return localStorage.getItem(STORAGE_KEY) === "pixel" ? "pixel" : "official";
+  } catch {
+    return "official";
   }
-  return context;
+}
+
+function writeMode(mode: ArtworkMode) {
+  try {
+    localStorage.setItem(STORAGE_KEY, mode);
+  } catch {
+    // Private mode / storage disabled: keep the in-memory change only.
+  }
+  listeners.forEach((listener) => listener());
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY) listener();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+const getServerMode = (): ArtworkMode => "official";
+
+/**
+ * Global sprite style (official artwork or pixel art), stored in
+ * localStorage. useSyncExternalStore renders the server value during
+ * hydration, so there's no hydration mismatch.
+ */
+export function useArtworkMode() {
+  const mode = useSyncExternalStore(subscribe, readMode, getServerMode);
+  const setMode = useCallback((next: ArtworkMode) => writeMode(next), []);
+  const toggle = useCallback(
+    () => writeMode(readMode() === "pixel" ? "official" : "pixel"),
+    [],
+  );
+  return { mode, setMode, toggle };
 }

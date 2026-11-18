@@ -1,118 +1,97 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { SlidersHorizontal } from "lucide-react";
-import { DexSearch } from "@/components/layout/dex-search";
-import { FILTER_SIDEBAR_WIDTH_CLASS } from "@/components/layout/layout-constants";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, type ReactNode } from "react";
 import { ArtworkToggle } from "@/components/layout/artwork-toggle";
-import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { useScrolledPast } from "@/hooks/use-window-scroll";
 import { cn } from "@/lib/utils";
 
 type HeaderProps = {
-  search?: string;
-  onSearchChange?: (value: string) => void;
-  activeFilterCount?: number;
-  onOpenFilters?: () => void;
+  /** Search field: inline from `sm`, on its own row on phones. */
+  search?: ReactNode;
+  /** Extra buttons shown before the theme/artwork toggles. */
+  actions?: ReactNode;
 };
 
-export function Header({
-  search,
-  onSearchChange,
-  activeFilterCount = 0,
-  onOpenFilters,
-}: HeaderProps) {
-  const hasCatalogSearch = Boolean(onSearchChange);
-  const showFiltersButton = Boolean(onOpenFilters);
+/** Publishes the header height as --header-h for sticky elements below it. */
+function useHeaderHeightVar(ref: React.RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const update = () =>
+      document.documentElement.style.setProperty(
+        "--header-h",
+        `${element.getBoundingClientRect().height}px`,
+      );
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+}
+
+export function Header({ search, actions }: HeaderProps) {
+  const ref = useRef<HTMLElement>(null);
+  const pathname = usePathname();
+  const scrolled = useScrolledPast(8);
+  useHeaderHeightVar(ref);
 
   return (
-    <motion.header
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="sticky top-0 z-50 border-b border-border/50 bg-background/70 pt-safe backdrop-blur-xl"
+    <header
+      ref={ref}
+      style={{ viewTransitionName: "site-header" }}
+      className={cn(
+        "sticky top-0 z-40 pt-safe transition-[background-color,box-shadow,border-color] duration-300",
+        "border-b bg-background/70 backdrop-blur-xl backdrop-saturate-150",
+        scrolled
+          ? "border-border/70 shadow-[0_8px_30px_-18px_rgb(0_0_0/0.6)]"
+          : "border-transparent",
+      )}
     >
-      <div
-        className={cn(
-          "mx-auto flex min-h-14 max-w-7xl items-center gap-1.5 py-2 sm:min-h-16 sm:gap-3 lg:gap-4",
-          "pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))]",
-          "sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]",
-        )}
-      >
-        <div
-          className={cn(
-            "flex min-w-0 items-center gap-2 sm:gap-3",
-            hasCatalogSearch && FILTER_SIDEBAR_WIDTH_CLASS,
-          )}
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-safe sm:h-16 sm:gap-4 sm:px-6">
+        <Link
+          href="/"
+          scroll={false}
+          onClick={(event) => {
+            if (pathname === "/") {
+              event.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
+          className="group flex shrink-0 items-center gap-2.5 rounded-xl pr-1 outline-none focus-visible:ring-3 focus-visible:ring-ring"
+          aria-label="Pokédex Ultra — home"
         >
-          <motion.div
-            whileHover={{ rotate: 12, scale: 1.08 }}
-            transition={{ type: "spring", stiffness: 260 }}
-            className="relative size-9 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/50 sm:size-10"
-          >
-            <Image
-              src="/icon.png"
-              alt="Pokédex Ultra"
-              fill
-              sizes="40px"
-              className="object-cover"
-              priority
-            />
-          </motion.div>
-          <div className="min-w-0">
-            <h1 className="font-heading truncate text-base font-bold tracking-tight sm:text-xl">
-              Pokédex Ultra
-            </h1>
-            <p className="hidden text-xs text-muted-foreground sm:block">
-              Powered by PokéAPI
-            </p>
-          </div>
+          <span className="relative size-9 overflow-hidden rounded-xl ring-1 ring-border/60 transition-transform duration-500 ease-[var(--ease-spring)] group-hover:rotate-[14deg] group-hover:scale-110 group-active:scale-95 sm:size-10">
+            <Image src="/icon.png" alt="" fill sizes="40px" className="object-cover" priority />
+          </span>
+          <span className="hidden flex-col leading-none min-[380px]:flex">
+            <span className="font-heading text-base font-bold tracking-tight sm:text-lg">
+              Pokédex <span className="text-gradient-brand">Ultra</span>
+            </span>
+            <span className="mt-0.5 hidden text-[11px] text-muted-foreground sm:block">
+              Every Pokémon, every detail
+            </span>
+          </span>
+        </Link>
+
+        <div className="hidden min-w-0 flex-1 justify-center sm:flex">
+          {search ? <div className="w-full max-w-xl">{search}</div> : null}
         </div>
+        <div className="flex-1 sm:hidden" />
 
-        {hasCatalogSearch ? (
-          <DexSearch
-            value={search ?? ""}
-            onChange={onSearchChange!}
-            className="hidden min-w-0 flex-1 sm:block"
-          />
-        ) : (
-          <div className="min-w-0 flex-1" />
-        )}
-
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          {showFiltersButton ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="relative size-11 shrink-0 touch-target gap-1.5 px-0 sm:h-11 sm:w-auto sm:px-3 lg:hidden"
-              aria-label="Open filters"
-              onClick={onOpenFilters}
-            >
-              <SlidersHorizontal className="size-4" />
-              <span className="hidden text-xs font-medium sm:inline">Filters</span>
-              {activeFilterCount > 0 ? (
-                <span className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                  {activeFilterCount > 9 ? "9+" : activeFilterCount}
-                </span>
-              ) : null}
-            </Button>
-          ) : null}
+        <div className="flex shrink-0 items-center gap-1">
+          {actions}
           <ArtworkToggle />
           <ThemeToggle />
         </div>
       </div>
 
-      {hasCatalogSearch ? (
-        <div
-          className={cn(
-            "border-t border-border/40 pb-3 sm:hidden",
-            "pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))]",
-          )}
-        >
-          <DexSearch value={search ?? ""} onChange={onSearchChange!} />
-        </div>
+      {search ? (
+        <div className="mx-auto max-w-7xl px-safe pb-3 sm:hidden">{search}</div>
       ) : null}
-    </motion.header>
+    </header>
   );
 }

@@ -1,87 +1,56 @@
-﻿import { describe, expect, it } from 'vitest'
-import type { Pokemon } from '@/features/pokemon/types'
+﻿import { describe, expect, it } from "vitest";
 import {
-  filterByGeneration,
-  formatPokemonId,
-  matchesPokemonSearch,
-  sortPokemon,
-} from './format'
+  formatDexNumber,
+  formatGenderRate,
+  formatHeight,
+  formatWeight,
+  getCatchChance,
+  getFemaleRatio,
+  getTypeTextColor,
+  titleCase,
+} from "./format";
 
-function poke(partial: Partial<Pokemon> & Pick<Pokemon, 'id' | 'name'>): Pokemon {
-  return {
-    base_experience: 0,
-    height: 10,
-    weight: 100,
-    order: partial.id,
-    sprites: { front_default: null },
-    types: [],
-    stats: [],
-    abilities: [],
-    moves: [],
-    species: { name: partial.name, url: '' },
-    forms: [],
-    ...partial,
-  }
-}
+describe("formatDexNumber", () => {
+  it("pads to 3 digits", () => {
+    expect(formatDexNumber(6)).toBe("#006");
+    expect(formatDexNumber(25)).toBe("#025");
+    expect(formatDexNumber(1000)).toBe("#1000");
+  });
+});
 
-describe('formatPokemonId', () => {
-  it('pads to 3 digits', () => {
-    expect(formatPokemonId(6)).toBe('#006')
-    expect(formatPokemonId(25)).toBe('#025')
-    expect(formatPokemonId(1000)).toBe('#1000')
-  })
-})
+describe("titleCase", () => {
+  it("turns slugs into words", () => {
+    expect(titleCase("thunder-stone")).toBe("Thunder Stone");
+    expect(titleCase("lets-go")).toBe("Lets Go");
+  });
+});
 
-describe('matchesPokemonSearch', () => {
-  const charizard = poke({ id: 6, name: 'charizard' })
-  const mrMime = poke({ id: 122, name: 'mr-mime' })
+describe("units", () => {
+  it("formats height and weight from decimetres/hectograms", () => {
+    expect(formatHeight(17)).toBe("1.7 m");
+    expect(formatWeight(905)).toBe("90.5 kg");
+  });
+});
 
-  it('empty query matches all', () => {
-    expect(matchesPokemonSearch(charizard, '  ')).toBe(true)
-  })
+describe("gender", () => {
+  it("handles genderless and ratios", () => {
+    expect(getFemaleRatio(-1)).toBeNull();
+    expect(formatGenderRate(-1)).toBe("Genderless");
+    expect(getFemaleRatio(1)).toBe(12.5);
+    expect(formatGenderRate(4)).toBe("50% ♂ · 50% ♀");
+  });
+});
 
-  it('matches name and dex number', () => {
-    expect(matchesPokemonSearch(charizard, 'char')).toBe(true)
-    expect(matchesPokemonSearch(charizard, '#006')).toBe(true)
-    expect(matchesPokemonSearch(charizard, '6')).toBe(true)
-    expect(matchesPokemonSearch(charizard, 'pikachu')).toBe(false)
-  })
+describe("getCatchChance", () => {
+  it("is capped at 100%", () => {
+    expect(getCatchChance(255)).toBeCloseTo(33.3, 1);
+    expect(getCatchChance(3)).toBeCloseTo(0.39, 2);
+  });
+});
 
-  it('matches hyphenated names by space', () => {
-    expect(matchesPokemonSearch(mrMime, 'mr mime')).toBe(true)
-  })
-})
-
-describe('filterByGeneration', () => {
-  const list = [
-    poke({ id: 1, name: 'bulbasaur' }),
-    poke({ id: 152, name: 'chikorita' }),
-    poke({ id: 906, name: 'sprigatito' }),
-  ]
-
-  it('returns all when generation is null', () => {
-    expect(filterByGeneration(list, null)).toHaveLength(3)
-  })
-
-  it('keeps ids inside the gen range', () => {
-    expect(filterByGeneration(list, 1).map((p) => p.name)).toEqual(['bulbasaur'])
-    expect(filterByGeneration(list, 2).map((p) => p.name)).toEqual(['chikorita'])
-    expect(filterByGeneration(list, 9).map((p) => p.name)).toEqual(['sprigatito'])
-  })
-})
-
-describe('sortPokemon', () => {
-  const list = [
-    poke({ id: 4, name: 'charmander' }),
-    poke({ id: 1, name: 'bulbasaur' }),
-  ]
-
-  it('sorts by id and name', () => {
-    expect(sortPokemon(list, 'id').map((p) => p.id)).toEqual([1, 4])
-    expect(sortPokemon(list, 'name').map((p) => p.name)).toEqual([
-      'bulbasaur',
-      'charmander',
-    ])
-    expect(sortPokemon(list, 'id', 'desc').map((p) => p.id)).toEqual([4, 1])
-  })
-})
+describe("getTypeTextColor", () => {
+  it("uses dark text on light type colors", () => {
+    expect(getTypeTextColor("electric")).toBe("#1a1a1a");
+    expect(getTypeTextColor("dragon")).toBe("#ffffff");
+  });
+});

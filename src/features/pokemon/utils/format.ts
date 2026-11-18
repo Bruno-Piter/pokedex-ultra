@@ -1,12 +1,3 @@
-import type {
-  FlavorText,
-  LocalizedName,
-  Pokemon,
-  PokemonSortOption,
-  SortDirection,
-  StatFilterStat,
-} from "@/features/pokemon/types";
-
 export const POKEMON_TYPES = [
   "normal",
   "fire",
@@ -51,65 +42,38 @@ export const TYPE_COLORS: Record<PokemonTypeName, string> = {
   fairy: "#D685AD",
 };
 
+/** Types whose color needs dark text for contrast. */
+const LIGHT_TYPES = new Set<string>(["electric", "ice", "ground", "steel", "normal", "bug", "rock", "grass", "fairy"]);
+
+export function isPokemonType(value: string): value is PokemonTypeName {
+  return (POKEMON_TYPES as readonly string[]).includes(value);
+}
+
 export function getTypeColor(type: string): string {
   return TYPE_COLORS[type as PokemonTypeName] ?? "#888888";
 }
 
-export function getPokemonTypeColors(
-  types: { type: { name: string } }[],
-): [string, string] {
-  const primary = getTypeColor(types[0]?.type.name ?? "normal");
-  const secondary = getTypeColor(
-    types[1]?.type.name ?? types[0]?.type.name ?? "normal",
-  );
+export function getTypeTextColor(type: string): string {
+  return LIGHT_TYPES.has(type) ? "#1a1a1a" : "#ffffff";
+}
+
+export function getPokemonTypeColors(types: readonly string[]): [string, string] {
+  const primary = getTypeColor(types[0] ?? "normal");
+  const secondary = getTypeColor(types[1] ?? types[0] ?? "normal");
   return [primary, secondary];
 }
 
-export function getLocalizedName(
-  names: LocalizedName[],
-  preferred = "en",
-): string {
-  const match = names.find((n) => n.language.name === preferred);
-  if (match) return match.name;
-  const en = names.find((n) => n.language.name === "en");
-  return en?.name ?? names[0]?.name ?? "";
+/** "#006" style national dex number. */
+export function formatDexNumber(speciesId: number): string {
+  return `#${String(speciesId).padStart(3, "0")}`;
 }
 
-export function getFlavorText(
-  entries: FlavorText[],
-  preferred = "en",
-): string {
-  const preferredEntries = entries.filter((e) => e.language.name === preferred);
-  const pool =
-    preferredEntries.length > 0
-      ? preferredEntries
-      : entries.filter((e) => e.language.name === "en");
-  const latest = pool[pool.length - 1];
-  return latest?.flavor_text.replace(/\f/g, " ").replace(/\n/g, " ") ?? "";
-}
-
-export function formatPokemonId(id: number): string {
-  return `#${String(id).padStart(3, "0")}`;
-}
-
-export function matchesPokemonSearch(pokemon: Pokemon, query: string): boolean {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-
-  const normalizedQuery = q.replace(/^#/, "").replace(/\s+/g, "-");
-  const name = pokemon.name.toLowerCase();
-  const displayName = name.replace(/-/g, " ");
-  const id = String(pokemon.id);
-  const padded = id.padStart(4, "0");
-
-  return (
-    name.includes(normalizedQuery) ||
-    displayName.includes(q) ||
-    id.startsWith(normalizedQuery) ||
-    padded.includes(normalizedQuery) ||
-    `#${padded}`.includes(q) ||
-    formatPokemonId(pokemon.id).toLowerCase().includes(q)
-  );
+export function titleCase(slug: string): string {
+  return slug
+    .split(/[-\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 export function formatWeight(weight: number): string {
@@ -120,117 +84,38 @@ export function formatHeight(height: number): string {
   return `${(height / 10).toFixed(1)} m`;
 }
 
-export function formatGenderRate(rate: number): string {
-  if (rate === -1) return "Genderless";
-  const female = (rate / 8) * 100;
-  const male = 100 - female;
-  return `${male.toFixed(0)}% ♂ / ${female.toFixed(0)}% ♀`;
+/** Female share in % (gender_rate is in eighths), or null when genderless. */
+export function getFemaleRatio(genderRate: number): number | null {
+  if (genderRate < 0) return null;
+  return (genderRate / 8) * 100;
 }
 
-export function getPokemonStatValue(
-  pokemon: Pokemon,
-  stat: StatFilterStat,
-): number {
-  if (stat === "bst") {
-    return pokemon.stats.reduce((sum, s) => sum + s.base_stat, 0);
-  }
-  return pokemon.stats.find((s) => s.stat.name === stat)?.base_stat ?? 0;
+export function formatGenderRate(genderRate: number): string {
+  const female = getFemaleRatio(genderRate);
+  if (female === null) return "Genderless";
+  return `${(100 - female).toFixed(1).replace(/\.0$/, "")}% ♂ · ${female.toFixed(1).replace(/\.0$/, "")}% ♀`;
 }
 
-export function getPokemonStatAverage(
-  pokemon: Pokemon,
-  stats: StatFilterStat[],
-): number {
-  if (stats.length === 0) return 0;
-  const total = stats.reduce(
-    (sum, stat) => sum + getPokemonStatValue(pokemon, stat),
-    0,
-  );
-  return total / stats.length;
-}
-
-function comparePokemon(
-  a: Pokemon,
-  b: Pokemon,
-  sort: PokemonSortOption,
-): number {
-  switch (sort) {
-    case "name":
-      return a.name.localeCompare(b.name);
-    case "weight":
-      return a.weight - b.weight;
-    case "height":
-      return a.height - b.height;
-    case "hp":
-    case "attack":
-    case "defense":
-    case "special-attack":
-    case "special-defense":
-    case "speed":
-    case "bst":
-      return getPokemonStatValue(a, sort) - getPokemonStatValue(b, sort);
-    default:
-      return a.id - b.id;
-  }
-}
-
-function sortSign(direction: SortDirection): number {
-  return direction === "asc" ? 1 : -1;
-}
-
-export function sortPokemon(
-  pokemon: Pokemon[],
-  sort: PokemonSortOption,
-  direction: SortDirection = "asc",
-): Pokemon[] {
-  const sign = sortSign(direction);
-  return [...pokemon].sort(
-    (a, b) => sign * comparePokemon(a, b, sort),
-  );
-}
-
-export function sortPokemonByStatPriority(
-  pokemon: Pokemon[],
-  statPriority: StatFilterStat[],
-  fallbackSort: PokemonSortOption,
-  statDirection: SortDirection = "asc",
-  fallbackDirection: SortDirection = "asc",
-): Pokemon[] {
-  if (statPriority.length === 0) {
-    return sortPokemon(pokemon, fallbackSort, fallbackDirection);
-  }
-
-  const statSign = sortSign(statDirection);
-  const fallbackSign = sortSign(fallbackDirection);
-
-  return [...pokemon].sort((a, b) => {
-    const diff =
-      statSign *
-      (getPokemonStatAverage(a, statPriority) -
-        getPokemonStatAverage(b, statPriority));
-    if (diff !== 0) return diff;
-    return fallbackSign * comparePokemon(a, b, fallbackSort);
-  });
+/** Chance of catching with a Poké Ball at full HP (Gen 5+ approximation). */
+export function getCatchChance(captureRate: number): number {
+  return Math.min(100, (captureRate / 3 / 255) * 100);
 }
 
 export const GENERATION_RANGES = [
-  { gen: 1, label: "Generation I", min: 1, max: 151 },
-  { gen: 2, label: "Generation II", min: 152, max: 251 },
-  { gen: 3, label: "Generation III", min: 252, max: 386 },
-  { gen: 4, label: "Generation IV", min: 387, max: 493 },
-  { gen: 5, label: "Generation V", min: 494, max: 649 },
-  { gen: 6, label: "Generation VI", min: 650, max: 721 },
-  { gen: 7, label: "Generation VII", min: 722, max: 809 },
-  { gen: 8, label: "Generation VIII", min: 810, max: 905 },
-  { gen: 9, label: "Generation IX", min: 906, max: 1025 },
+  { gen: 1, label: "Generation I", short: "I", region: "Kanto" },
+  { gen: 2, label: "Generation II", short: "II", region: "Johto" },
+  { gen: 3, label: "Generation III", short: "III", region: "Hoenn" },
+  { gen: 4, label: "Generation IV", short: "IV", region: "Sinnoh" },
+  { gen: 5, label: "Generation V", short: "V", region: "Unova" },
+  { gen: 6, label: "Generation VI", short: "VI", region: "Kalos" },
+  { gen: 7, label: "Generation VII", short: "VII", region: "Alola" },
+  { gen: 8, label: "Generation VIII", short: "VIII", region: "Galar" },
+  { gen: 9, label: "Generation IX", short: "IX", region: "Paldea" },
 ] as const;
 
-export function filterByGeneration(
-  pokemon: Pokemon[],
-  generation: number | null,
-): Pokemon[] {
-  if (!generation) return pokemon;
-  const range = GENERATION_RANGES.find((g) => g.gen === generation);
-  if (!range) return pokemon;
-  return pokemon.filter((p) => p.id >= range.min && p.id <= range.max);
+export function getGenerationLabel(generation: number): string {
+  return (
+    GENERATION_RANGES.find((range) => range.gen === generation)?.label ??
+    `Generation ${generation}`
+  );
 }

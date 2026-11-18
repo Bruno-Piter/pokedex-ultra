@@ -9,5 +9,8 @@ export const { dynamic, dynamicParams, revalidate, generateStaticParams, GET } =
   createSerwistRoute({
     swSrc: "src/app/sw.ts",
     additionalPrecacheEntries: [{ url: "/~offline", revision }],
+    // Pokédex data is cached at runtime under its versioned URL (?v=…);
+    // precaching the unversioned copy would download it twice.
+    globIgnores: ["public/data/**"],
     useNativeEsbuild: true,
   });

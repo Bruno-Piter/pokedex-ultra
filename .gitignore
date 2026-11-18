@@ -46,5 +46,5 @@ public/swe-worker*
 .vercel
 .env*
 
-# generated slim catalog (rebuilt on next build)
-/public/data/catalog.json
+# generated Pokédex data (scripts/build-data.mjs, runs on predev/prebuild)
+/public/data/

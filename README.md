@@ -1,12 +1,12 @@
 # Pokédex Ultra
 
-Pokédex web focada em **profundidade de dados** e **ferramentas de análise** — além de listar Pokémon, ela ajuda a comparar stats, filtrar o catálogo inteiro e entender matchups, evoluções e movesets com clareza.
+Pokédex web focada em **profundidade de dados** e **ferramentas de análise** — além de listar Pokémon, ela ajuda a comparar stats, filtrar o catálogo inteiro e entender matchups, evoluções e movesets com clareza. Funciona como PWA instalável e offline.
 
 Dados via [PokéAPI](https://pokeapi.co/).
 
 ## Preview
 
-**Catálogo com filtros avançados** — stats, BST, tipos e habilidades visíveis na lista; filtros por geração, tipo e ordenação por stats.
+**Catálogo com filtros avançados** — stats, BST, tipos e habilidades visíveis na lista; filtros por geração, tipo, golpes e ordenação por stats.
 
 ![Catálogo com filtros por tipo Dragon, stats e habilidades na lista](docs/screenshots/catalogo-filtros.png)
 
@@ -16,31 +16,29 @@ Dados via [PokéAPI](https://pokeapi.co/).
 
 ## Por que é mais completa
 
-A maioria das Pokédex para por nome, sprite e tipos. Aqui o catálogo funciona como uma **ferramenta de consulta**:
-
 | Área | O que entrega |
 |---|---|
-| **Catálogo** | ~1.350 Pokémon em lista horizontal com stats base, BST (Base Stats Total), tipos e habilidades visíveis na mesma linha |
-| **Filtros** | Tipo (até 2), geração, ordenação global e por stats (múltiplos, com média), cada uma com direção própria |
-| **Busca** | Filtro em tempo real no header (`Ctrl+K`) sobre todo o catálogo |
-| **Detalhe** | Overview, stats, moves, evolução e defesas por tipo — sem abas redundantes |
-| **Stats** | Radar, barras, faixas min/máx por nível (50–200) e naturezas (estilo Serebii), com total por linha |
-| **Type defenses** | Grid de efetividade contra os 18 tipos |
-| **Moves** | Agrupados (Level Up, TM, Egg, Tutor) com tipo, categoria, power, acc e PP |
-| **Evolução** | Cadeia estendida com ramificações e formas especiais |
+| **Catálogo** | ~1.350 Pokémon e formas numa lista virtualizada (rolagem fluida até o fim), com stats, BST, tipos e habilidades na mesma linha |
+| **Filtros** | Tipo (até 2), geração, golpes (até 4, combobox com busca), formas alternativas e ordenação por número, nome, altura, peso ou stats (média de vários) |
+| **Busca** | Nome, nome oficial ou número (`Ctrl/⌘+K`), palavras em qualquer ordem ("mega x") |
+| **Detalhe** | Hero com arte, Shiny, anterior/próximo (botões, setas do teclado ou swipe) e abas Overview, Stats, Moves e Evolution |
+| **Stats** | Barras e radar animados, faixas min/máx por nível (50–200) e natureza |
+| **Type defenses** | Fraquezas, resistências e imunidades agrupadas |
+| **Moves** | Por jogo (DLCs incluídos), busca, filtro por categoria, TM/HM/TR corretos, valores da época e efeito ao tocar |
+| **Evolução** | Condições atuais legíveis, evoluções regionais (Alolan Raichu…) e Megas/Gigantamax/formas |
 | **Sprites** | Arte oficial ou pixel art, com toggle global |
 
 ## Funcionalidades em destaque
 
-- Catálogo completo pré-carregado — filtros e ordenação aplicados em **todos** os Pokémon, não só na página atual
-- Habilidades com descrição no hover, direto na lista
-- Cards com glow animado baseado nos tipos do Pokémon
-- Sidebar de filtros fixa, organizada por seções
-- Tema claro/escuro
+- Filtros e posição da lista preservados ao abrir um Pokémon e voltar
+- Transição "morph" do sprite da lista para o detalhe (View Transitions)
+- Habilidades com descrição no hover (lista) e inline (detalhe)
+- Offline: catálogo, golpes e Pokémon já visitados abrem sem rede
+- Tema claro/escuro com transição circular; respeita "reduzir movimento"
 
 ## Stack
 
-Next.js 16 · React 19 · TypeScript · TanStack Query · Tailwind CSS 4 · shadcn/ui · Framer Motion · Recharts · PokéAPI
+Next.js 16 · React 19 · TypeScript · TanStack Query · TanStack Virtual · Tailwind CSS 4 · Base UI (shadcn) · Framer Motion · Serwist · PokéAPI
 
 ## Como rodar
 
@@ -50,49 +48,55 @@ Requisitos: **Node.js 20+** e **npm**.
 git clone https://github.com/Bruno-Piter/pokedex-ultra.git
 cd pokedex-ultra
 npm install
-npm run dev
+npm run dev   # na primeira vez gera public/data (~30 s)
 ```
 
 Abra [http://localhost:3000](http://localhost:3000).
 
 ```bash
-npm run build   # produção
-npm run start   # servir build
-npm run lint    # ESLint
-npm run icons   # regenerar favicon e icones PWA a partir de scripts/source-icon.png
+npm run build         # produção (gera/reaproveita os dados antes)
+npm run start         # servir build
+npm run lint          # ESLint
+npm run typecheck     # TypeScript
+npm test              # Vitest
+npm run data:build    # gera public/data (usa cache de até 7 dias)
+npm run data:refresh  # força nova geração a partir da PokéAPI
+npm run icons         # regera favicon e ícones PWA a partir de scripts/source-icon.png
 ```
 
+## Dados e performance
 
-## Catalogo e performance
+A PokéAPI é consultada **no build**, não no navegador, para tudo o que é estático:
 
-Full catalog is no longer built in the browser via thousands of PokeAPI calls.
-
-- build writes public/data/catalog.json slim payload
-- client fetches static JSON; fallback GET /api/catalog with 24h cache
-- TanStack Query cache persists to IndexedDB for instant repeat visits
-- regenerate via catalog build script
-
-First Vercel build talks to PokeAPI about 1-3 min. Later loads are one JSON.
+- `scripts/build-data.mjs` gera `public/data/catalog.json` (Pokémon, formas, nomes oficiais, stats, habilidades com descrição, golpes aprendíveis), `moves.json` (todos os golpes, TM/HM/TR por jogo, valores antigos) e `manifest.json` (hash de versão).
+- O resultado fica em `.next/cache/pokedex-data` por 7 dias — a Vercel preserva essa pasta, então os builds seguintes não chamam a PokéAPI.
+- O cliente baixa os arquivos com `?v=<hash>`; o Service Worker guarda cache-first e só baixa de novo quando os dados mudam.
+- No detalhe, só learnset, species e cadeia evolutiva vêm da PokéAPI (uma requisição cada, em paralelo, com timeout e retry).
 
 ## Progressive Web App
 
-Producao usa Serwist para cache do shell/assets. Em desenvolvimento o worker fica desligado.
+Produção usa Serwist (em desenvolvimento o worker fica desligado).
 
-**Como instalar o app:** Chrome/Edge (desktop) pelo icone na barra; Android pelo menu do Chrome; iOS Safari via Compartilhar > Adicionar a Tela de Inicio.
+- Cache-first para respostas da PokéAPI, sprites e dados versionados: Pokémon já visitados funcionam offline.
+- Aviso discreto de offline/reconexão; o app não recarrega sozinho quando a rede oscila.
+- Ícones com transparência real e ícone maskable para Android.
 
-Dados da PokeAPI precisam de rede; falhas mostram erro amigavel (sem tela branca).
-
-UI PWA: safe-area insets + shell standalone (drawer de filtros no mobile, scroll nos painéis).
+**Como instalar:** Chrome/Edge (desktop) pelo ícone na barra; Android pelo menu do navegador (Chrome ou Samsung Internet); iOS Safari via Compartilhar > Adicionar à Tela de Início.
 
 ## Estrutura
 
 ```
 src/
-├── app/                 # rotas (App Router)
-├── components/layout/   # header, sidebar, busca
-├── features/pokemon/    # API, hooks, componentes e utils
-├── lib/pokeapi/         # cliente HTTP
-└── providers/           # tema, cache, artwork
+├── app/                   # rotas (App Router), service worker, manifest
+├── components/            # layout (header, busca, toggles), feedback e ui/
+├── features/pokemon/
+│   ├── api/               # PokéAPI + definições de queries
+│   ├── components/        # catalog/ (lista), detail/ (detalhe), filters/
+│   ├── hooks/ state/      # dados do detalhe, store da lista
+│   └── utils/             # filtros, tipos, golpes, evoluções, stats
+├── lib/data/              # catálogo e golpes estáticos (public/data)
+└── providers/             # tema, cache, PWA, animação
+scripts/build-data.mjs     # gera os dados estáticos
 ```
 
 ## Autor
@@ -102,4 +106,3 @@ src/
 ---
 
 Pokémon © Nintendo / Game Freak / The Pokémon Company. Dados via [PokéAPI](https://pokeapi.co/).
-

@@ -1,263 +1,164 @@
-import {
-  getPokemonFormByPokemonName,
-  getPokemonSpecies,
-} from "@/features/pokemon/api/pokemon.api";
-import type {
-  ChainLink,
-  ExtendedChainLink,
-  PokemonFormData,
-  PokemonSpecies,
-} from "@/features/pokemon/types";
-import { getEvolutionLabel } from "@/features/pokemon/utils/evolution-format";
+import type { Catalog, CatalogPokemon, FormKind } from "@/lib/data/catalog";
+import type { ChainLink, EvolutionDetail } from "@/features/pokemon/types";
 import { extractIdFromUrl } from "@/lib/pokeapi/client";
+import {
+  formatEvolutionConditions,
+  getCurrentEvolutionDetails,
+  type NameResolvers,
+} from "@/features/pokemon/utils/evolution-format";
+import { titleCase } from "@/features/pokemon/utils/format";
 
-const FORM_BRANCH_PATTERNS = [
-  /-mega(-[a-z0-9]+)?$/i,
-  /-gmax$/i,
-  /-(alola|galar|hisui|paldea)$/i,
-  /-primal$/i,
-  /-zen$/i,
-  /-(dusk|midnight|noon|sunshine|ice)$/i,
-  /-(rapid-strike|single-strike)$/i,
-  /-(attack|defense|speed)$/i,
-  /-(hero|unbound|complete|origin|totem|eternamax)$/i,
-  /-crowned$/i,
-  /-bloodmoon$/i,
-] as const;
-
-function capitalize(text: string): string {
-  return text
-    .split(/[\s-]+/)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-export function formatFormDisplayName(pokemonName: string): string {
-  const megaMatch = pokemonName.match(/^(.+)-mega-([a-z0-9]+)$/i);
-  if (megaMatch) {
-    return `Mega ${capitalize(megaMatch[1])} ${megaMatch[2].toUpperCase()}`;
-  }
-
-  if (pokemonName.endsWith("-mega")) {
-    const base = pokemonName.replace(/-mega$/, "");
-    return `Mega ${capitalize(base)}`;
-  }
-
-  if (pokemonName.endsWith("-gmax")) {
-    const base = pokemonName.replace(/-gmax$/, "");
-    return `Gigantamax ${capitalize(base)}`;
-  }
-
-  const regionalMatch = pokemonName.match(/^(.+)-(alola|galar|hisui|paldea)$/i);
-  if (regionalMatch) {
-    return `${capitalize(regionalMatch[1])} (${capitalize(regionalMatch[2])})`;
-  }
-
-  if (pokemonName.endsWith("-primal")) {
-    const base = pokemonName.replace(/-primal$/, "");
-    return `Primal ${capitalize(base)}`;
-  }
-
-  if (pokemonName.endsWith("-eternamax")) {
-    const base = pokemonName.replace(/-eternamax$/, "");
-    return `Eternamax ${capitalize(base)}`;
-  }
-
-  return capitalize(pokemonName);
-}
-
-function getMegaStoneLabel(pokemonName: string): string {
-  const megaMatch = pokemonName.match(/^(.+)-mega-([a-z0-9]+)$/i);
-  if (megaMatch) {
-    return `${capitalize(megaMatch[1])}ite ${megaMatch[2].toUpperCase()}`;
-  }
-
-  if (pokemonName.endsWith("-mega")) {
-    const base = pokemonName.replace(/-mega$/, "");
-    return `${capitalize(base)}ite`;
-  }
-
-  return "Mega Stone";
-}
-
-export function getFormConnectorLabel(
-  pokemonName: string,
-  form: PokemonFormData,
-): string {
-  if (form.is_mega) return getMegaStoneLabel(pokemonName);
-
-  if (form.form_name === "gmax" || pokemonName.endsWith("-gmax")) {
-    return "Gigantamax";
-  }
-
-  if (pokemonName.endsWith("-eternamax")) return "Eternamax";
-
-  if (pokemonName.endsWith("-primal")) return "Primal Reversion";
-
-  const regionalMatch = pokemonName.match(/-(alola|galar|hisui|paldea)$/i);
-  if (regionalMatch) {
-    return `${capitalize(regionalMatch[1])} Form`;
-  }
-
-  if (form.form_name && form.form_name !== pokemonName) {
-    return capitalize(form.form_name);
-  }
-
-  return "Form Change";
-}
-
-function shouldShowFormBranch(
-  pokemonName: string,
-  form: PokemonFormData,
-): boolean {
-  if (form.is_mega) return true;
-  if (form.form_name === "gmax" || pokemonName.endsWith("-gmax")) return true;
-  if (pokemonName.endsWith("-eternamax")) return true;
-  return FORM_BRANCH_PATTERNS.some((pattern) => pattern.test(pokemonName));
-}
-
-function sortFormBranches(a: ExtendedChainLink, b: ExtendedChainLink): number {
-  const rank = (name: string) => {
-    if (name.includes("-mega")) return 0;
-    if (name.endsWith("-gmax")) return 1;
-    if (name.endsWith("-eternamax")) return 2;
-    if (name.endsWith("-primal")) return 3;
-    return 4;
-  };
-
-  const diff = rank(a.pokemonName) - rank(b.pokemonName);
-  return diff !== 0 ? diff : a.displayName.localeCompare(b.displayName);
-}
-
-type BuildContext = {
-  speciesCache: Map<number, PokemonSpecies>;
-  formCache: Map<string, PokemonFormData | null>;
+export type EvolutionNode = {
+  key: string;
+  speciesId: number;
+  pokemonId: number;
+  pokemonName: string;
+  displayName: string;
+  isBaby: boolean;
+  /** How the previous stage evolves into this one (empty for the first stage). */
+  conditions: string[];
+  /** Methods from older games, when they differ. */
+  alternatives: string[];
+  /** Only this form evolves, e.g. "Galarian Meowth". */
+  fromForm: string | null;
+  children: EvolutionNode[];
 };
 
-async function getCachedSpecies(
-  speciesId: number,
-  ctx: BuildContext,
-): Promise<PokemonSpecies> {
-  if (!ctx.speciesCache.has(speciesId)) {
-    ctx.speciesCache.set(speciesId, await getPokemonSpecies(speciesId));
+export type EvolutionForm = {
+  pokemonId: number;
+  pokemonName: string;
+  displayName: string;
+  speciesId: number;
+  kind: FormKind;
+};
+
+export type EvolutionTree = {
+  root: EvolutionNode;
+  /** Number of nodes in the chain (1 = does not evolve). */
+  nodeCount: number;
+  /** Alternate forms of the chain's species not already shown as nodes. */
+  forms: EvolutionForm[];
+};
+
+const FORM_KIND_ORDER: Record<FormKind, number> = {
+  mega: 0,
+  gmax: 1,
+  primal: 2,
+  regional: 3,
+  other: 4,
+};
+
+/**
+ * Builds the evolution tree from the PokéAPI chain plus the static catalog.
+ * Regional evolutions (PokéAPI `evolved_pokemon_form`, e.g. Alolan Raichu)
+ * become their own nodes; Megas, Gigantamax and other forms are listed
+ * separately. No extra requests are needed.
+ */
+export function buildEvolutionTree(
+  chain: ChainLink,
+  catalog: Catalog,
+  names: NameResolvers = {},
+): EvolutionTree {
+  const resolvers: NameResolvers = {
+    move: names.move,
+    pokemon: (slug) =>
+      catalog.byName.get(slug)?.displayName ?? names.pokemon?.(slug) ?? titleCase(slug),
+  };
+  const shown = new Set<number>();
+  const speciesInChain = new Set<number>();
+  let nodeCount = 0;
+
+  function createNode(
+    link: ChainLink,
+    pokemon: CatalogPokemon | undefined,
+    conditions: string[],
+    alternatives: string[],
+    fromForm: string | null,
+  ): EvolutionNode {
+    const speciesId = extractIdFromUrl(link.species.url);
+    speciesInChain.add(speciesId);
+    nodeCount += 1;
+    if (pokemon) shown.add(pokemon.id);
+    return {
+      key: pokemon?.name ?? link.species.name,
+      speciesId,
+      pokemonId: pokemon?.id ?? speciesId,
+      pokemonName: pokemon?.name ?? link.species.name,
+      displayName: pokemon?.displayName ?? titleCase(link.species.name),
+      isBaby: link.is_baby,
+      conditions,
+      alternatives,
+      fromForm,
+      children: [],
+    };
   }
-  return ctx.speciesCache.get(speciesId)!;
-}
 
-async function getCachedForm(
-  pokemonName: string,
-  ctx: BuildContext,
-): Promise<PokemonFormData | null> {
-  if (!ctx.formCache.has(pokemonName)) {
-    ctx.formCache.set(
-      pokemonName,
-      await getPokemonFormByPokemonName(pokemonName),
-    );
+  function requiredFormName(details: EvolutionDetail[]): string | null {
+    const slug = details.find((detail) => detail.required_pokemon_form)?.required_pokemon_form
+      ?.name;
+    const form = slug ? catalog.byName.get(slug) : undefined;
+    return form && !form.isDefault ? form.displayName : null;
   }
-  return ctx.formCache.get(pokemonName) ?? null;
-}
 
-async function buildFormBranches(
-  species: PokemonSpecies,
-  ctx: BuildContext,
-): Promise<ExtendedChainLink[]> {
-  const alternateVarieties = (species.varieties ?? []).filter(
-    (variety) => !variety.is_default,
-  );
+  function buildStage(link: ChainLink): EvolutionNode[] {
+    const speciesId = extractIdFromUrl(link.species.url);
+    const defaultPokemon = catalog.bySpecies.get(speciesId);
+    const current = getCurrentEvolutionDetails(link.evolution_details);
+    const older = link.evolution_details.filter((detail) => !current.includes(detail));
 
-  const branches: ExtendedChainLink[] = [];
-
-  for (const variety of alternateVarieties) {
-    const pokemonName = variety.pokemon.name;
-    const pokemonId = extractIdFromUrl(variety.pokemon.url);
-    const form = await getCachedForm(pokemonName, ctx);
-
-    if (!form || !shouldShowFormBranch(pokemonName, form)) {
-      continue;
+    // Group the current methods by the form they evolve into.
+    const groups = new Map<string, EvolutionDetail[]>([["", []]]);
+    for (const detail of current) {
+      const formSlug = detail.evolved_pokemon_form?.name ?? "";
+      const variant = formSlug ? catalog.byName.get(formSlug) : undefined;
+      const key = variant && !variant.isDefault ? formSlug : "";
+      groups.set(key, [...(groups.get(key) ?? []), detail]);
     }
 
-    branches.push({
-      species: { name: species.name, url: variety.pokemon.url },
-      speciesId: species.id,
-      pokemonId,
-      pokemonName,
-      displayName: formatFormDisplayName(pokemonName),
-      isFormBranch: true,
-      connectorLabel: getFormConnectorLabel(pokemonName, form),
-      evolution_details: [],
-      evolves_to: [],
-    });
+    const nodes: EvolutionNode[] = [];
+    for (const [formSlug, details] of groups) {
+      if (formSlug && details.length === 0) continue;
+      const pokemon = formSlug ? catalog.byName.get(formSlug) : defaultPokemon;
+      if (pokemon && shown.has(pokemon.id)) continue;
+      const { labels, alternatives } = formatEvolutionConditions(
+        details,
+        formSlug ? [] : older,
+        resolvers,
+      );
+      const node = createNode(link, pokemon, labels, alternatives, requiredFormName(details));
+      if (!formSlug) {
+        node.children = link.evolves_to.flatMap(buildStage);
+      }
+      nodes.push(node);
+    }
+    return nodes;
   }
 
-  return branches;
+  const rootSpeciesId = extractIdFromUrl(chain.species.url);
+  const root = createNode(chain, catalog.bySpecies.get(rootSpeciesId), [], [], null);
+  root.children = chain.evolves_to.flatMap(buildStage);
+
+  const forms: EvolutionForm[] = [...speciesInChain]
+    .flatMap((speciesId) => catalog.formsBySpecies.get(speciesId) ?? [])
+    .filter((form) => !shown.has(form.id))
+    .map((form) => ({
+      pokemonId: form.id,
+      pokemonName: form.name,
+      displayName: form.displayName,
+      speciesId: form.speciesId,
+      kind: form.form?.kind ?? "other",
+    }))
+    .sort(
+      (a, b) =>
+        FORM_KIND_ORDER[a.kind] - FORM_KIND_ORDER[b.kind] ||
+        a.speciesId - b.speciesId ||
+        a.pokemonId - b.pokemonId,
+    );
+
+  return { root, nodeCount, forms };
 }
 
-async function buildExtendedNode(
-  link: ChainLink,
-  ctx: BuildContext,
-  connectorLabel: string | null = null,
-  isFormBranch = false,
-  pokemonOverride?: { id: number; name: string; displayName?: string },
-): Promise<ExtendedChainLink> {
-  const speciesId = extractIdFromUrl(link.species.url);
-  const species = await getCachedSpecies(speciesId, ctx);
-
-  const defaultVariety =
-    species.varieties?.find((variety) => variety.is_default) ??
-    species.varieties?.[0];
-
-  const pokemonId =
-    pokemonOverride?.id ??
-    (defaultVariety
-      ? extractIdFromUrl(defaultVariety.pokemon.url)
-      : speciesId);
-  const pokemonName = pokemonOverride?.name ?? defaultVariety?.pokemon.name ?? link.species.name;
-  const displayName =
-    pokemonOverride?.displayName ??
-    (isFormBranch
-      ? formatFormDisplayName(pokemonName)
-      : capitalize(link.species.name));
-
-  const naturalChildren = await Promise.all(
-    link.evolves_to.map((child) =>
-      buildExtendedNode(
-        child,
-        ctx,
-        getEvolutionLabel(child.evolution_details) || null,
-      ),
-    ),
-  );
-
-  const formChildren = !isFormBranch ? await buildFormBranches(species, ctx) : [];
-
-  return {
-    species: link.species,
-    speciesId,
-    pokemonId,
-    pokemonName,
-    displayName,
-    isFormBranch,
-    connectorLabel,
-    evolution_details: link.evolution_details,
-    evolves_to: [...naturalChildren, ...formChildren].sort((a, b) => {
-      if (a.isFormBranch !== b.isFormBranch) {
-        return a.isFormBranch ? 1 : -1;
-      }
-      if (a.isFormBranch && b.isFormBranch) {
-        return sortFormBranches(a, b);
-      }
-      return 0;
-    }),
-  };
-}
-
-export async function buildExtendedEvolutionChain(
-  chain: ChainLink,
-): Promise<ExtendedChainLink> {
-  const ctx: BuildContext = {
-    speciesCache: new Map(),
-    formCache: new Map(),
-  };
-
-  return buildExtendedNode(chain, ctx);
+/** Longest path from the root, e.g. 3 for Bulbasaur → Ivysaur → Venusaur. */
+export function getStageCount(node: EvolutionNode): number {
+  return 1 + Math.max(0, ...node.children.map(getStageCount));
 }

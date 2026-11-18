@@ -1,205 +1,146 @@
 import { extractIdFromUrl, pokeFetch } from "@/lib/pokeapi/client";
-import { POKEAPI_ENDPOINTS } from "@/lib/pokeapi/endpoints";
 import type {
-  AbilityData,
   EvolutionChain,
-  Machine,
-  MoveData,
-  NamedResource,
+  FlavorText,
   Pokemon,
+  PokemonMove,
   PokemonSpecies,
-  PokemonFormData,
-  ResourceList,
-  TypeData,
-  VersionGroup,
+  StatName,
 } from "@/features/pokemon/types";
-import { hydrateCatalog } from "@/lib/catalog/hydrate";
 
-const PAGE_SIZE = 24;
-const BATCH_CONCURRENCY = 10;
+/**
+ * Slim versions of the PokéAPI payloads. Raw /pokemon responses reach
+ * hundreds of KB (sprites, game indices…); keeping only what the UI uses
+ * keeps memory flat while browsing many Pokémon on a phone.
+ */
+export type PokemonDetail = {
+  id: number;
+  name: string;
+  speciesId: number;
+  isDefault: boolean;
+  baseExperience: number | null;
+  height: number;
+  weight: number;
+  types: string[];
+  stats: Record<StatName, number>;
+  abilities: { name: string; hidden: boolean }[];
+  moves: PokemonMove[];
+};
 
-async function fetchInBatches<T>(
-  items: string[],
-  fetcher: (item: string) => Promise<T>,
-  concurrency = BATCH_CONCURRENCY,
-): Promise<Map<string, T>> {
-  const results = new Map<string, T>();
-  for (let i = 0; i < items.length; i += concurrency) {
-    const batch = items.slice(i, i + concurrency);
-    const batchResults = await Promise.all(
-      batch.map(async (item) => [item, await fetcher(item)] as const),
-    );
-    for (const [key, value] of batchResults) {
-      results.set(key, value);
-    }
+export type SpeciesDetail = {
+  id: number;
+  name: string;
+  displayName: string;
+  genus: string | null;
+  flavorText: string | null;
+  genderRate: number;
+  captureRate: number;
+  baseHappiness: number | null;
+  hatchCounter: number | null;
+  growthRate: string | null;
+  eggGroups: string[];
+  habitat: string | null;
+  color: string | null;
+  shape: string | null;
+  generation: number;
+  isBaby: boolean;
+  isLegendary: boolean;
+  isMythical: boolean;
+  evolutionChainId: number | null;
+};
+
+function englishFlavorText(entries: FlavorText[]): string | null {
+  const english = entries.filter((entry) => entry.language.name === "en");
+  const latest = english[english.length - 1]?.flavor_text;
+  if (!latest) return null;
+  return latest
+    .replace(/[\f\n\r]+/g, " ")
+    .replace(/­/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function toPokemonDetail(raw: Pokemon): PokemonDetail {
+  const stats = {} as Record<StatName, number>;
+  for (const entry of raw.stats) {
+    stats[entry.stat.name as StatName] = entry.base_stat;
   }
-  return results;
+
+  return {
+    id: raw.id,
+    name: raw.name,
+    speciesId: extractIdFromUrl(raw.species.url),
+    isDefault: raw.is_default ?? true,
+    baseExperience: raw.base_experience ?? null,
+    height: raw.height,
+    weight: raw.weight,
+    types: [...raw.types].sort((a, b) => a.slot - b.slot).map((t) => t.type.name),
+    stats,
+    abilities: [...raw.abilities]
+      .sort((a, b) => a.slot - b.slot)
+      .map((a) => ({ name: a.ability.name, hidden: a.is_hidden })),
+    moves: raw.moves.map((entry) => ({
+      move: { name: entry.move.name, url: "" },
+      version_group_details: entry.version_group_details.map((detail) => ({
+        level_learned_at: detail.level_learned_at,
+        move_learn_method: { name: detail.move_learn_method.name, url: "" },
+        version_group: { name: detail.version_group.name, url: "" },
+      })),
+    })),
+  };
 }
 
-export function parseTmNumberFromItem(itemName: string): number | null {
-  const match = itemName.match(/^tm(\d+)$/i);
-  if (!match) return null;
-  return Number.parseInt(match[1], 10);
+export function toSpeciesDetail(raw: PokemonSpecies): SpeciesDetail {
+  const english = <T extends { language: { name: string } }>(entries: T[]) =>
+    entries.find((entry) => entry.language.name === "en");
+
+  return {
+    id: raw.id,
+    name: raw.name,
+    displayName: english(raw.names)?.name ?? raw.name,
+    genus: english(raw.genera ?? [])?.genus ?? null,
+    flavorText: englishFlavorText(raw.flavor_text_entries ?? []),
+    genderRate: raw.gender_rate,
+    captureRate: raw.capture_rate,
+    baseHappiness: raw.base_happiness ?? null,
+    hatchCounter: raw.hatch_counter ?? null,
+    growthRate: raw.growth_rate?.name ?? null,
+    eggGroups: (raw.egg_groups ?? []).map((group) => group.name),
+    habitat: raw.habitat?.name ?? null,
+    color: raw.color?.name ?? null,
+    shape: raw.shape?.name ?? null,
+    generation: extractIdFromUrl(raw.generation.url),
+    isBaby: raw.is_baby,
+    isLegendary: raw.is_legendary,
+    isMythical: raw.is_mythical,
+    evolutionChainId: raw.evolution_chain?.url
+      ? extractIdFromUrl(raw.evolution_chain.url)
+      : null,
+  };
 }
 
-export async function getPokemonList(
-  offset = 0,
-  limit = PAGE_SIZE,
-): Promise<ResourceList> {
-  return pokeFetch<ResourceList>(
-    `${POKEAPI_ENDPOINTS.pokemon}?limit=${limit}&offset=${offset}`,
-  );
-}
-
-export async function getPokemonByIdOrName(
+export async function getPokemon(
   idOrName: string | number,
-): Promise<Pokemon> {
-  return pokeFetch<Pokemon>(`${POKEAPI_ENDPOINTS.pokemon}/${idOrName}`);
-}
-
-export async function getPokemonSpecies(id: number): Promise<PokemonSpecies> {
-  return pokeFetch<PokemonSpecies>(
-    `${POKEAPI_ENDPOINTS.pokemonSpecies}/${id}`,
+  signal?: AbortSignal,
+): Promise<PokemonDetail> {
+  const raw = await pokeFetch<Pokemon>(
+    `/pokemon/${String(idOrName).toLowerCase()}`,
+    { signal },
   );
+  return toPokemonDetail(raw);
 }
 
-export async function getPokemonForm(id: number): Promise<PokemonFormData> {
-  return pokeFetch<PokemonFormData>(`${POKEAPI_ENDPOINTS.pokemonForm}/${id}`);
+export async function getPokemonSpecies(
+  id: number,
+  signal?: AbortSignal,
+): Promise<SpeciesDetail> {
+  const raw = await pokeFetch<PokemonSpecies>(`/pokemon-species/${id}`, { signal });
+  return toSpeciesDetail(raw);
 }
 
-export async function getPokemonFormByPokemonName(
-  pokemonName: string,
-): Promise<PokemonFormData | null> {
-  const pokemon = await getPokemonByIdOrName(pokemonName);
-  const formUrl = pokemon.forms?.[0]?.url;
-  if (!formUrl) return null;
-  return getPokemonForm(extractIdFromUrl(formUrl));
+export async function getEvolutionChain(
+  id: number,
+  signal?: AbortSignal,
+): Promise<EvolutionChain> {
+  return pokeFetch<EvolutionChain>(`/evolution-chain/${id}`, { signal });
 }
-
-export async function getEvolutionChain(id: number): Promise<EvolutionChain> {
-  return pokeFetch<EvolutionChain>(
-    `${POKEAPI_ENDPOINTS.evolutionChain}/${id}`,
-  );
-}
-
-export async function getType(name: string): Promise<TypeData> {
-  return pokeFetch<TypeData>(`${POKEAPI_ENDPOINTS.type}/${name}`);
-}
-
-export async function getAbility(name: string): Promise<AbilityData> {
-  return pokeFetch<AbilityData>(`${POKEAPI_ENDPOINTS.ability}/${name}`);
-}
-
-export async function getMove(name: string): Promise<MoveData> {
-  return pokeFetch<MoveData>(`${POKEAPI_ENDPOINTS.move}/${name}`);
-}
-
-export async function getMachine(id: number): Promise<Machine> {
-  return pokeFetch<Machine>(`${POKEAPI_ENDPOINTS.machine}/${id}`);
-}
-
-export async function getAllVersionGroups(): Promise<VersionGroup[]> {
-  const list = await pokeFetch<ResourceList>(
-    `${POKEAPI_ENDPOINTS.versionGroup}?limit=100`,
-  );
-  return Promise.all(
-    list.results.map((entry) =>
-      pokeFetch<VersionGroup>(
-        `${POKEAPI_ENDPOINTS.versionGroup}/${entry.name}`,
-      ),
-    ),
-  );
-}
-
-export async function fetchMovesByName(
-  names: string[],
-): Promise<Map<string, MoveData>> {
-  return fetchInBatches(names, getMove);
-}
-
-export async function buildTmMapForVersionGroup(
-  moves: MoveData[],
-  versionGroupName: string,
-): Promise<Map<string, number>> {
-  const tmMap = new Map<string, number>();
-  const machineCache = new Map<number, number | null>();
-
-  for (const move of moves) {
-    const machineEntry = move.machines?.find(
-      (entry) => entry.version_group.name === versionGroupName,
-    );
-    if (!machineEntry) continue;
-
-    const machineId = extractIdFromUrl(machineEntry.machine.url);
-    if (!machineCache.has(machineId)) {
-      const machine = await getMachine(machineId);
-      machineCache.set(
-        machineId,
-        parseTmNumberFromItem(machine.item.name),
-      );
-    }
-
-    const tmNumber = machineCache.get(machineId);
-    if (tmNumber !== null && tmNumber !== undefined) {
-      tmMap.set(move.name, tmNumber);
-    }
-  }
-
-  return tmMap;
-}
-
-export async function getAllPokemonNames(): Promise<NamedResource[]> {
-  const first = await pokeFetch<ResourceList>(
-    `${POKEAPI_ENDPOINTS.pokemon}?limit=1`,
-  );
-  const all = await pokeFetch<ResourceList>(
-    `${POKEAPI_ENDPOINTS.pokemon}?limit=${first.count}`,
-  );
-  return all.results;
-}
-
-
-export async function fetchCatalog(): Promise<Pokemon[]> {
-  const staticRes = await fetch("/data/catalog.json", {
-    cache: "force-cache",
-  });
-  if (staticRes.ok) {
-    return hydrateCatalog(await staticRes.json());
-  }
-
-  const apiRes = await fetch("/api/catalog");
-  if (!apiRes.ok) {
-    throw new Error("Failed to load Pokemon catalog");
-  }
-  return hydrateCatalog(await apiRes.json());
-}
-
-export async function fetchAllPokemon(): Promise<Pokemon[]> {
-  return fetchCatalog();
-}
-
-export async function fetchPokemonBatch(urls: string[]): Promise<Pokemon[]> {
-  return Promise.all(
-    urls.map(async (url) => {
-      const id = extractIdFromUrl(url);
-      return getPokemonByIdOrName(id);
-    }),
-  );
-}
-
-export async function fetchPokemonByType(
-  typeName: string,
-  offset: number,
-  limit = PAGE_SIZE,
-): Promise<{ pokemon: Pokemon[]; total: number }> {
-  const typeData = await getType(typeName);
-  const slice = typeData.pokemon.slice(offset, offset + limit);
-  const pokemon = await Promise.all(
-    slice.map((entry) =>
-      getPokemonByIdOrName(extractIdFromUrl(entry.pokemon.url)),
-    ),
-  );
-  return { pokemon, total: typeData.pokemon.length };
-}
-
-export { PAGE_SIZE };
